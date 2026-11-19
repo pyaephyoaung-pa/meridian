@@ -8,8 +8,8 @@ A three-register analog watch face for the Garmin Venu 4 (41mm / 45mm), written 
 |---|---|---|---|
 | 12 o'clock | Date window ("THU 19") | — | Accent |
 | 9 o'clock | Heart rate, bpm (`--` with no reading) | 40–200 bpm | Rose |
-| 3 o'clock | Body Battery | 0–100 | Sky |
-| 6 o'clock | Watch battery % | 0–100% | Sage, amber at 20% or less |
+| 3 o'clock | Body Battery, labelled "ENERGY" | 0–100 | Sky |
+| 6 o'clock | Watch battery % | 0–100% | Sage; at 20% or less amber, with the label switching to "LOW" |
 
 - Faceted ivory hour and minute hands, accent seconds hand with counterweight ring
 - Minute track, 5-minute marks, ivory hour indices, double accent bar at 12
@@ -21,14 +21,36 @@ A three-register analog watch face for the Garmin Venu 4 (41mm / 45mm), written 
 
 ## Settings
 
-Edit in Garmin Connect (or in the simulator: File → Edit Persistent Storage → Edit Application.Properties data).
+Edit in Garmin Connect (or in the simulator: File → Edit Persistent Storage → Edit Application.Properties data). Both settings sit in an "Appearance" group whose description explains press-and-hold and what `--` means, since Garmin Connect has no other place for help text.
 
 | Setting | Options | Default |
 |---|---|---|
 | Accent color | Champagne, Ivory, Sky, Rose | Champagne |
 | Seconds hand | On / Off | On |
 
-The accent color is used for the 12 o'clock bar, date number, seconds hand and center cap.
+The accent color is used for the 12 o'clock bar, date number, seconds hand and center cap. With Ivory, the seconds hand and center cap stay champagne so they don't blend into the ivory hour and minute hands.
+
+## Accessibility
+
+Audited against WCAG 2.1 AA, adapted for a watch face.
+
+- **Text size:** all text follows the watch's Font Scale setting (Settings → Display; 0.8–1.4× on Venu 4). Register labels scale up to 1.15× so they still fit between the registers and the hour indices. At the default size, values are about 2 mm tall and labels about 1.3 mm on the 45mm.
+- **Contrast:** text is at least 6:1 on black. Graphics needed to read the face are at least 3:1: minute ticks are `#5D5950`, and each gauge's dim track ends in a 7.7:1 tick that marks the top of the scale. The register hairlines and date-window border are decorative.
+- **Not color alone:** at 20% or less the battery label reads "LOW" as well as turning amber.
+- **Hands over values:** the hour and minute hands sit on a 2 px black halo, so digits underneath stay distinct from the hand.
+- **Language:** labels and settings are translated into German, French, Spanish, Italian, Portuguese, Dutch, Japanese, Korean and Simplified/Traditional Chinese (`resources-<lang>/strings`). "BPM" stays in English. The Body Battery register is labelled "ENERGY" (Japanese "体力"), which fits under the register and says what the 0–100 score measures; the settings help text ties it to Body Battery. These translations have not been reviewed by native speakers yet. Chinese, Japanese and Korean text uses the watch's own CJK vector fonts at the same size as the Latin labels; Thai, Arabic and Hebrew use the system font for the watch's language, which keeps letter shaping and right-to-left order.
+- **Motion:** no flashing; the seconds hand can be turned off.
+- **Not possible on the platform:** Connect IQ watch faces have no accessibility tree and Garmin watches have no screen reader, so values can't be announced.
+
+### Store description
+
+Copy for the Connect IQ Store listing, which covers what the face itself can't explain:
+
+> Meridian is a three-register analog face: heart rate at 9, Body Battery at 3, watch battery at 6 and the date at 12.
+>
+> Press and hold a register to open its glance (heart rate, Body Battery or battery). "--" means there's no reading yet, for example right after you put the watch on. "ENERGY" is your Garmin Body Battery, an energy score from 0–100. When the watch battery is at 20% or less, its register turns amber and reads "LOW".
+>
+> Text follows your watch's Font Scale setting. In always-on mode the face shows outlined hands, the date and a dim row of heart rate, Body Battery and battery, and shifts slightly each minute to protect the display.
 
 ## Data sources
 
@@ -50,18 +72,17 @@ source/
   MeridianView.mc                drawing: dial, registers, hands, always-on
   MeridianDelegate.mc            press and hold a register -> open the Garmin glance
 resources/
-  settings/                      accent color + seconds hand settings
-  strings/strings.xml
+  settings/                      accent color + seconds hand settings, help text
+  strings/strings.xml            English strings (labels, settings)
   drawables/launcher_icon.png    70×70 base icon
+resources-<lang>/strings/        translations (deu fre spa ita por dut jpn kor zhs zht)
 resources-venu441mm/drawables/   54×54 icon for the 41mm
 resources-venu445mm/drawables/   65×65 icon for the 45mm
 ```
 
 All geometry in `MeridianView.mc` is written in a 454 px design space (the 45mm screen) and scaled at draw time, so the 41mm (390 px) gets the same layout. Text sizes are set for the watch's 326 ppi screen (about 13 px per mm), not copied from the design's px: the simulator shows pixels 1:1 on a monitor, so text that looks fine there can be under a millimetre tall on the wrist.
 
-The dial, gauge tracks, labels and date window are drawn once into an offscreen buffer and only redrawn when the accent color or the date changes; each second only the gauge values, numbers and hands are drawn on top.
-
-Weekday names in scripts Roboto doesn't cover (Arabic, Hebrew, Chinese, Japanese, Korean, Thai) are drawn whole in the system font for the watch's language, without letter-spacing.
+The dial, gauge tracks, labels and date window are drawn once into an offscreen buffer and only redrawn when the accent color, the date, the Font Scale setting or the low-battery state changes; each second only the gauge values, numbers and hands are drawn on top.
 
 ## Build and run
 

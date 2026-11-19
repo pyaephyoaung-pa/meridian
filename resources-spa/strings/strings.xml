@@ -1,0 +1,16 @@
+<strings>
+    <string id="AppName">Meridian</string>
+    <!-- BPM stays in English -->
+    <string id="LabelHeartRate">BPM</string>
+    <string id="LabelBodyBattery">ENERGÍA</string>
+    <string id="SettingsGroupTitle">Apariencia</string>
+    <string id="SettingsHelp">Mantén pulsado un indicador (frecuencia cardiaca, Body Battery o batería) para abrir su vista rápida. ENERGÍA es tu Body Battery (0–100). -- significa que aún no hay lectura. Con el acento Marfil, el segundero sigue en color champán.</string>
+    <string id="AccentTitle">Color de acento</string>
+    <string id="AccentChampagne">Champán</string>
+    <string id="AccentIvory">Marfil</string>
+    <string id="AccentSky">Cielo</string>
+    <string id="AccentRose">Rosa</string>
+    <string id="ShowSecondsTitle">Segundero</string>
+    <string id="LabelBattery">BATERÍA</string>
+    <string id="LabelBatteryLow">BAJA</string>
+</strings>

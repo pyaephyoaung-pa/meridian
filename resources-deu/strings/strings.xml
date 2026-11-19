@@ -1,0 +1,16 @@
+<strings>
+    <string id="AppName">Meridian</string>
+    <!-- BPM stays in English -->
+    <string id="LabelHeartRate">BPM</string>
+    <string id="LabelBodyBattery">ENERGIE</string>
+    <string id="SettingsGroupTitle">Darstellung</string>
+    <string id="SettingsHelp">Halte eine Anzeige (Herzfrequenz, Body Battery oder Akku) gedrückt, um den passenden Glance zu öffnen. ENERGIE ist deine Body Battery (0–100). -- bedeutet, dass noch kein Messwert vorliegt. Mit dem Akzent Elfenbein bleibt der Sekundenzeiger champagnerfarben.</string>
+    <string id="AccentTitle">Akzentfarbe</string>
+    <string id="AccentChampagne">Champagner</string>
+    <string id="AccentIvory">Elfenbein</string>
+    <string id="AccentSky">Himmelblau</string>
+    <string id="AccentRose">Rosé</string>
+    <string id="ShowSecondsTitle">Sekundenzeiger</string>
+    <string id="LabelBattery">AKKU</string>
+    <string id="LabelBatteryLow">NIEDRIG</string>
+</strings>

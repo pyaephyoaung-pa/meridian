@@ -1,0 +1,16 @@
+<strings>
+    <string id="AppName">Meridian</string>
+    <!-- BPM stays in English -->
+    <string id="LabelHeartRate">BPM</string>
+    <string id="LabelBodyBattery">能量</string>
+    <string id="SettingsGroupTitle">外观</string>
+    <string id="SettingsHelp">长按心率、Body Battery 或电池表盘区域，可打开对应的概览。“能量”即 Body Battery（0–100）。“--”表示暂无读数。使用象牙色强调色时，秒针保持香槟色。</string>
+    <string id="AccentTitle">强调色</string>
+    <string id="AccentChampagne">香槟色</string>
+    <string id="AccentIvory">象牙色</string>
+    <string id="AccentSky">天蓝色</string>
+    <string id="AccentRose">玫瑰色</string>
+    <string id="ShowSecondsTitle">秒针</string>
+    <string id="LabelBattery">电池</string>
+    <string id="LabelBatteryLow">电量低</string>
+</strings>

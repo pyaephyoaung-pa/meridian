@@ -1,9 +1,22 @@
 <strings>
     <string id="AppName">Meridian</string>
+
+    <!-- Settings (Garmin Connect) -->
+    <string id="SettingsGroupTitle">Appearance</string>
+    <string id="SettingsHelp">Press and hold a register (heart rate, Body Battery or battery) to open its glance. ENERGY is your Body Battery (0–100). -- means there is no reading yet. With the Ivory accent, the seconds hand stays champagne.</string>
     <string id="AccentTitle">Accent color</string>
     <string id="AccentChampagne">Champagne</string>
     <string id="AccentIvory">Ivory</string>
     <string id="AccentSky">Sky</string>
     <string id="AccentRose">Rose</string>
     <string id="ShowSecondsTitle">Seconds hand</string>
+
+    <!-- Register labels on the face. Keep them short: they sit under each
+         register, no wider than the register itself. The Body Battery
+         register says ENERGY (what the 0-100 score measures); the settings
+         help text ties it to Body Battery. -->
+    <string id="LabelHeartRate">BPM</string>
+    <string id="LabelBodyBattery">ENERGY</string>
+    <string id="LabelBattery">BATTERY</string>
+    <string id="LabelBatteryLow">LOW</string>
 </strings>

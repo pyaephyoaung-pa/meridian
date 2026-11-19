@@ -1,0 +1,16 @@
+<strings>
+    <string id="AppName">Meridian</string>
+    <!-- BPM stays in English -->
+    <string id="LabelHeartRate">BPM</string>
+    <string id="LabelBodyBattery">에너지</string>
+    <string id="SettingsGroupTitle">표시</string>
+    <string id="SettingsHelp">심박수, Body Battery, 배터리 표시를 길게 누르면 해당 글랜스가 열립니다. 에너지는 Body Battery(0~100)를 나타냅니다. --는 아직 측정값이 없다는 뜻입니다. 아이보리 강조 색상에서는 초침이 샴페인 색으로 유지됩니다.</string>
+    <string id="AccentTitle">강조 색상</string>
+    <string id="AccentChampagne">샴페인</string>
+    <string id="AccentIvory">아이보리</string>
+    <string id="AccentSky">스카이</string>
+    <string id="AccentRose">로즈</string>
+    <string id="ShowSecondsTitle">초침</string>
+    <string id="LabelBattery">배터리</string>
+    <string id="LabelBatteryLow">부족</string>
+</strings>

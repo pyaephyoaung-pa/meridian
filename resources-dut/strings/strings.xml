@@ -1,0 +1,16 @@
+<strings>
+    <string id="AppName">Meridian</string>
+    <!-- BPM stays in English -->
+    <string id="LabelHeartRate">BPM</string>
+    <string id="LabelBodyBattery">ENERGIE</string>
+    <string id="SettingsGroupTitle">Weergave</string>
+    <string id="SettingsHelp">Houd een meter (hartslag, Body Battery of batterij) ingedrukt om de bijbehorende glance te openen. ENERGIE is je Body Battery (0–100). -- betekent dat er nog geen meting is. Met het accent Ivoor blijft de secondewijzer champagnekleurig.</string>
+    <string id="AccentTitle">Accentkleur</string>
+    <string id="AccentChampagne">Champagne</string>
+    <string id="AccentIvory">Ivoor</string>
+    <string id="AccentSky">Hemelsblauw</string>
+    <string id="AccentRose">Roze</string>
+    <string id="ShowSecondsTitle">Secondewijzer</string>
+    <string id="LabelBattery">BATTERIJ</string>
+    <string id="LabelBatteryLow">LAAG</string>
+</strings>

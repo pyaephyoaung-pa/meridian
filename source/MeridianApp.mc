@@ -24,4 +24,14 @@ class MeridianApp extends Application.AppBase {
         }
         WatchUi.requestUpdate();
     }
+
+    // Font Scale changed in the watch's settings (API 5.1+; the view also
+    // re-checks it once a minute for older firmware)
+    function onDeviceSettingChanged(aSymbol as Symbol, aValue as Object) as Void {
+        var view = _view;
+        if (aSymbol == :fontScale && view != null) {
+            view.refreshFontScale();
+            WatchUi.requestUpdate();
+        }
+    }
 }
