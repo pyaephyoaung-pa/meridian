@@ -3,7 +3,9 @@ import Toybox.Lang;
 import Toybox.System;
 import Toybox.WatchUi;
 
-// Tap a subdial to open the matching native glance/widget.
+// Press and hold a subdial to open the matching native glance/widget.
+// onPress is the touch-and-hold event; a running watch face gets no plain
+// taps (WatchFaceDelegate.onTap only fires in watch face config mode).
 class MeridianDelegate extends WatchUi.WatchFaceDelegate {
 
     function initialize() {
