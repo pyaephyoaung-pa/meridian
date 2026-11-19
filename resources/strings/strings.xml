@@ -1,3 +1,9 @@
 <strings>
-    <string id="AppName">Ember Face</string>
+    <string id="AppName">Meridian</string>
+    <string id="AccentTitle">Accent color</string>
+    <string id="AccentChampagne">Champagne</string>
+    <string id="AccentIvory">Ivory</string>
+    <string id="AccentSky">Sky</string>
+    <string id="AccentRose">Rose</string>
+    <string id="ShowSecondsTitle">Seconds hand</string>
 </strings>

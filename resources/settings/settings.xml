@@ -1,0 +1,13 @@
+<settings>
+    <setting propertyKey="@Properties.AccentColor" title="@Strings.AccentTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.AccentChampagne</listEntry>
+            <listEntry value="1">@Strings.AccentIvory</listEntry>
+            <listEntry value="2">@Strings.AccentSky</listEntry>
+            <listEntry value="3">@Strings.AccentRose</listEntry>
+        </settingConfig>
+    </setting>
+    <setting propertyKey="@Properties.ShowSeconds" title="@Strings.ShowSecondsTitle">
+        <settingConfig type="boolean"/>
+    </setting>
+</settings>

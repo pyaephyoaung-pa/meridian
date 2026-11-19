@@ -17,3 +17,6 @@ external-mir/
 
 # Stray copies
 Claude outputs/
+
+# Simulator-generated settings
+*-settings.json
