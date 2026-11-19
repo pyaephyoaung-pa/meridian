@@ -16,14 +16,16 @@ import Toybox.WatchUi;
 //
 // All geometry is written in the design's 454 px space (Venu 4 45mm) and
 // scaled by w/454 at draw time, so the 41mm (390 px) gets the same layout.
-// Shared with MeridianDelegate for tap hit-testing.
+// Shared with MeridianDelegate for press hit-testing.
 module Meridian {
     const SIZE   = 454.0;
     const C      = 227.0;    // center
-    const SUB_R  = 46.0;     // subdial gauge radius
+    const SUB_R  = 58.0;     // subdial gauge radius
     const HR_X   = 119.0;  const HR_Y   = 227.0;   // 9 o'clock
     const BB_X   = 335.0;  const BB_Y   = 227.0;   // 3 o'clock
     const BAT_X  = 227.0;  const BAT_Y  = 335.0;   // 6 o'clock
+
+    typedef Font as Graphics.VectorFont or Graphics.FontDefinition;
 }
 
 class MeridianView extends WatchUi.WatchFace {
@@ -67,6 +69,38 @@ class MeridianView extends WatchUi.WatchFace {
     private const ICON_BOLT  = 1;
     private const ICON_BATT  = 2;
 
+    // ---- Layout, design px ----
+    // Gauge: 270° opening at the bottom. Dc.drawArc degrees (0 = 3 o'clock,
+    // counter-clockwise), so it starts at 7:30 and runs clockwise to 4:30.
+    private const GAUGE_START = 225;
+    private const GAUGE_END   = 315;
+    private const GAUGE_PEN   = 4.0;
+    private const RING_R      = 48.0;    // subdial inner hairline
+    private const ICON_DY     = -33.0;   // register icon, value and label offsets
+    private const ICON_SIZE   = 16.0;
+    private const VALUE_DY    = 1.0;
+    private const LABEL_DY    = 54.0;    // just below the gauge's bottom opening, clear of its end caps
+    private const DATE_Y      = 119.0;
+    private const DATE_H      = 40.0;
+    private const DATE_PAD    = 12.0;
+    private const DATE_GAP    = 8.0;
+    private const AOD_DOT_Y   = 27.0;
+    private const AOD_ROW_Y   = 329.0;
+    private const AOD_STEP    = 5.0;     // always-on shift grid spacing
+
+    // Font sizes, design px. The Venu 4 is 326 ppi (~13 px per mm), so these
+    // are sized for the wrist rather than copied from the design's px, which
+    // rendered labels about half a millimetre tall.
+    private const VALUE_PX = 36.0;
+    private const LABEL_PX = 18.0;
+    private const DAY_PX   = 22.0;
+    private const DATE_PX  = 30.0;
+    private const AOD_PX   = 26.0;
+
+    private const MODE_ON  = 0;
+    private const MODE_AOD = 1;
+    private const MODE_OFF = 2;
+
     private var _lowPower as Boolean = false;
     private var _accent as Number = 0xD4B37A;
     private var _showSeconds as Boolean = true;
@@ -77,16 +111,44 @@ class MeridianView extends WatchUi.WatchFace {
     private var _oy as Float = 0.0;
 
     // Vector fonts (API 4.2+, drawn via drawAngledText); bitmap fallbacks otherwise
-    private var _valueFont as Graphics.VectorFont or Graphics.FontDefinition = Graphics.FONT_SMALL;
-    private var _labelFont as Graphics.VectorFont or Graphics.FontDefinition = Graphics.FONT_XTINY;
-    private var _dayFont   as Graphics.VectorFont or Graphics.FontDefinition = Graphics.FONT_XTINY;
-    private var _dateFont  as Graphics.VectorFont or Graphics.FontDefinition = Graphics.FONT_TINY;
-    private var _aodFont   as Graphics.VectorFont or Graphics.FontDefinition = Graphics.FONT_TINY;
-    private var _aodDateFont as Graphics.VectorFont or Graphics.FontDefinition = Graphics.FONT_TINY;
+    private var _valueFont as Meridian.Font = Graphics.FONT_SMALL;
+    private var _labelFont as Meridian.Font = Graphics.FONT_XTINY;
+    private var _dayFont   as Meridian.Font = Graphics.FONT_XTINY;
+    private var _dateFont  as Meridian.Font = Graphics.FONT_TINY;
+    private var _aodFont   as Meridian.Font = Graphics.FONT_TINY;
+
+    // Static parts of the main face (dial, gauge tracks, labels, date window),
+    // rendered once and redrawn only when the accent or the date changes.
+    private var _layer as Graphics.BufferedBitmap? = null;
+    private var _layerDirty as Boolean = true;
+
+    // Data, refreshed by updateData()
+    private var _hr as Number? = null;
+    private var _bb as Number? = null;
+    private var _batt as Number = 0;
+    private var _minute as Number = -1;          // clock minute of the last refresh
+    private var _hrHistory as Number? = null;    // per-minute fallbacks
+    private var _hrStale as Boolean = true;
+    private var _bbHistory as Number? = null;
+    private var _bbStale as Boolean = true;
+    private var _bbLive as Number? = null;       // pushed by the complication callback
+    private var _dayText as String = "";
+    private var _numText as String = "";
+    private var _dayIsRoboto as Boolean = true;
 
     function initialize() {
         WatchFace.initialize();
         loadSettings();
+        if (Toybox has :Complications) {
+            var id = new Complications.Id(Complications.COMPLICATION_TYPE_BODY_BATTERY);
+            try {
+                Complications.registerComplicationChangeCallback(method(:onComplicationChanged));
+                Complications.subscribeToUpdates(id);
+            } catch (e) {
+                // complication unavailable on this device/firmware
+            }
+            _bbLive = complicationNumber(id);
+        }
     }
 
     function loadSettings() as Void {
@@ -97,26 +159,39 @@ class MeridianView extends WatchUi.WatchFace {
         _accent = ACCENTS[idx as Number];
         var secs = Application.Properties.getValue("ShowSeconds");
         _showSeconds = !(secs instanceof Boolean) || secs;
+        _layerDirty = true;
     }
 
     function onLayout(dc as Dc) as Void {
-        var k = dc.getWidth() / Meridian.SIZE;
+        _k = dc.getWidth() / Meridian.SIZE;
         // VectorFont is documented for drawAngledText, so only use vector fonts
         // where that exists (see drawStr).
         if ((Graphics has :getVectorFont) && (dc has :drawAngledText)) {
-            _valueFont   = vectorFont(["RobotoRegular"], 26 * k, _valueFont);
-            _labelFont   = vectorFont(["RobotoRegular"], 8 * k, _labelFont);
-            _dayFont     = vectorFont(["RobotoRegular"], 10 * k, _dayFont);
-            _dateFont    = vectorFont(["RobotoMedium", "RobotoRegular"], 15 * k, _dateFont);
-            _aodFont     = vectorFont(["RobotoRegular"], 15 * k, _aodFont);
-            _aodDateFont = vectorFont(["RobotoRegular"], 15 * k, _aodDateFont);
+            _valueFont = vectorFont(["RobotoRegular"], VALUE_PX, _valueFont);
+            _labelFont = vectorFont(["RobotoCondensedRegular", "RobotoRegular"], LABEL_PX, _labelFont);
+            _dayFont   = vectorFont(["RobotoRegular"], DAY_PX, _dayFont);
+            _dateFont  = vectorFont(["RobotoMedium", "RobotoRegular"], DATE_PX, _dateFont);
+            _aodFont   = vectorFont(["RobotoRegular"], AOD_PX, _aodFont);
         }
+
+        // Offscreen layer from the graphics pool; without one, drawStatic()
+        // draws straight to the screen every frame.
+        _layer = null;
+        if (Graphics has :createBufferedBitmap) {
+            try {
+                _layer = Graphics.createBufferedBitmap({
+                    :width => dc.getWidth(),
+                    :height => dc.getHeight()
+                }).get() as Graphics.BufferedBitmap?;
+            } catch (e) {
+                _layer = null;
+            }
+        }
+        _layerDirty = true;
     }
 
-    private function vectorFont(faces as Array<String>, size as Numeric,
-                                fallback as Graphics.VectorFont or Graphics.FontDefinition)
-                                as Graphics.VectorFont or Graphics.FontDefinition {
-        var f = Graphics.getVectorFont({ :face => faces, :size => size.toNumber() });
+    private function vectorFont(faces as Array<String>, designPx as Float, fallback as Meridian.Font) as Meridian.Font {
+        var f = Graphics.getVectorFont({ :face => faces, :size => (designPx * _k + 0.5).toNumber() });
         return (f != null) ? f : fallback;
     }
 
@@ -130,32 +205,86 @@ class MeridianView extends WatchUi.WatchFace {
         WatchUi.requestUpdate();
     }
 
+    // Body Battery complication pushes (subscribed in initialize)
+    function onComplicationChanged(id as Complications.Id) as Void {
+        if (id.getType() == Complications.COMPLICATION_TYPE_BODY_BATTERY) {
+            _bbLive = complicationNumber(id);
+        }
+    }
+
     function onUpdate(dc as Dc) as Void {
         dc.setColor(C_BLACK, C_BLACK);
         dc.clear();
+
+        var mode = displayMode();
+        if (mode == MODE_OFF) {
+            return;
+        }
         if (dc has :setAntiAlias) {
             dc.setAntiAlias(true);
         }
 
         _k = dc.getWidth() / Meridian.SIZE;
         var clock = System.getClockTime();
+        updateData(clock);
 
-        if (_lowPower) {
+        if (mode == MODE_AOD) {
             drawAlwaysOn(dc, clock);
             return;
         }
 
         _ox = 0.0;
         _oy = 0.0;
-        drawDial(dc);
-        drawSubdials(dc);
-        drawDateWindow(dc);
+        drawStaticLayer(dc);
+        drawSubdialValues(dc);
         drawHands(dc, clock);
+    }
+
+    // Always-on when either the sleep callbacks or the system say so: a face
+    // (re)started while the screen is already in always-on gets no
+    // onEnterSleep. Nothing is drawn while the display is off.
+    private function displayMode() as Number {
+        var low = _lowPower;
+        if (System has :getDisplayMode) {
+            var m = System.getDisplayMode();
+            if (m == System.DISPLAY_MODE_OFF) {
+                return MODE_OFF;
+            }
+            low = low || (m == System.DISPLAY_MODE_LOW_POWER);
+        }
+        return low ? MODE_AOD : MODE_ON;
     }
 
     // =====================================================================
     // Main face
     // =====================================================================
+
+    private function drawStaticLayer(dc as Dc) as Void {
+        var layer = _layer;
+        if (layer == null) {
+            drawStatic(dc);
+            return;
+        }
+        if (_layerDirty) {
+            var ldc = layer.getDc();
+            ldc.setColor(C_BLACK, C_BLACK);
+            ldc.clear();
+            if (ldc has :setAntiAlias) {
+                ldc.setAntiAlias(true);
+            }
+            drawStatic(ldc);
+            _layerDirty = false;
+        }
+        dc.drawBitmap(0, 0, layer);
+    }
+
+    private function drawStatic(dc as Dc) as Void {
+        drawDial(dc);
+        drawSubdialFrame(dc, Meridian.HR_X, Meridian.HR_Y, "BPM");
+        drawSubdialFrame(dc, Meridian.BB_X, Meridian.BB_Y, "BODY BATT");
+        drawSubdialFrame(dc, Meridian.BAT_X, Meridian.BAT_Y, "BATTERY");
+        drawDateWindow(dc);
+    }
 
     // Minute track, 5-minute marks, hour indices, double accent bar at 12
     private function drawDial(dc as Dc) as Void {
@@ -179,71 +308,77 @@ class MeridianView extends WatchUi.WatchFace {
         dc.setPenWidth(1);
     }
 
-    private function drawSubdials(dc as Dc) as Void {
-        // Heart rate: arc spans 40-200 bpm
-        var hr = getHeartRate();
-        var hrFrac = (hr != null) ? (hr - 40) / 160.0 : 0.0;
-        drawSubdial(dc, Meridian.HR_X, Meridian.HR_Y, hrFrac, C_ROSE,
-            ICON_HEART, C_ROSE, (hr != null && hr > 0) ? hr.toString() : "--", C_IVORY, "BPM", 0.0);
-
-        // Body Battery: 0-100
-        var bb = getBodyBattery();
-        drawSubdial(dc, Meridian.BB_X, Meridian.BB_Y, (bb != null) ? bb / 100.0 : 0.0, C_SKY,
-            ICON_BOLT, C_SKY, (bb != null) ? bb.toString() : "--", C_IVORY, "BODY BATT", 0.0);
-
-        // Watch battery: 0-100%, amber at 20% or less
-        var batt = System.getSystemStats().battery;
-        var low = batt <= 20;
-        var battColor = low ? C_AMBER : C_SAGE;
-        drawSubdial(dc, Meridian.BAT_X, Meridian.BAT_Y, batt / 100.0, battColor,
-            ICON_BATT, battColor, batt.format("%d"), low ? C_AMBER : C_IVORY, "BATTERY", batt / 100.0);
-    }
-
-    // One register: hairline ring, 270° gauge, icon, value, label
-    private function drawSubdial(dc as Dc, dx as Float, dy as Float, frac as Float, gaugeColor as Number,
-                                 icon as Number, iconColor as Number, value as String, valueColor as Number,
-                                 label as String, battFrac as Float) as Void {
+    // Static part of a register: hairline ring, gauge track, label
+    private function drawSubdialFrame(dc as Dc, dx as Float, dy as Float, label as String) as Void {
         var cx = X(dx);
         var cy = Y(dy);
 
         dc.setColor(C_SUB_RING, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(1);
-        dc.drawCircle(cx, cy, 38 * _k);
+        dc.drawCircle(cx, cy, RING_R * _k);
 
-        drawGauge(dc, cx, cy, Meridian.SUB_R * _k, pen(3.0), frac, gaugeColor);
-
-        drawIcon(dc, icon, cx, cy - 25 * _k, 12 * _k, iconColor, true, battFrac);
-
-        dc.setColor(valueColor, Graphics.COLOR_TRANSPARENT);
-        drawStr(dc, cx, cy, _valueFont, value, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        var r = Meridian.SUB_R * _k;
+        var p = pen(GAUGE_PEN);
+        dc.setPenWidth(p);
+        dc.setColor(C_GRAPHITE, Graphics.COLOR_TRANSPARENT);
+        dc.drawArc(cx, cy, r, Graphics.ARC_CLOCKWISE, GAUGE_START, GAUGE_END);
+        arcCap(dc, cx, cy, r, GAUGE_END.toFloat(), p / 2.0);
+        dc.setPenWidth(1);
 
         dc.setColor(C_ASH, Graphics.COLOR_TRANSPARENT);
-        drawSpaced(dc, cx, cy + 25 * _k, _labelFont, label, 8 * 0.16 * _k);
+        drawSpaced(dc, cx, cy + LABEL_DY * _k, _labelFont, label, LABEL_PX * 0.08 * _k);
     }
 
-    // 270° gauge opening at the bottom: starts at 7:30, runs clockwise to 4:30
-    private function drawGauge(dc as Dc, cx as Float, cy as Float, r as Float, p as Number,
-                               frac as Float, color as Number) as Void {
+    private function drawSubdialValues(dc as Dc) as Void {
+        // Heart rate: arc spans 40-200 bpm
+        var hr = _hr;
+        drawSubdialValue(dc, Meridian.HR_X, Meridian.HR_Y, (hr != null) ? (hr - 40) / 160.0 : 0.0,
+            C_ROSE, ICON_HEART, metricText(hr), C_IVORY, 0.0);
+
+        // Body Battery: 0-100
+        var bb = _bb;
+        drawSubdialValue(dc, Meridian.BB_X, Meridian.BB_Y, (bb != null) ? bb / 100.0 : 0.0,
+            C_SKY, ICON_BOLT, metricText(bb), C_IVORY, 0.0);
+
+        // Watch battery: 0-100%, amber at 20% or less (of the value shown)
+        var low = _batt <= 20;
+        var battFrac = _batt / 100.0;
+        drawSubdialValue(dc, Meridian.BAT_X, Meridian.BAT_Y, battFrac, low ? C_AMBER : C_SAGE,
+            ICON_BATT, _batt.toString(), low ? C_AMBER : C_IVORY, battFrac);
+    }
+
+    // Live part of a register: gauge value, icon, value text
+    private function drawSubdialValue(dc as Dc, dx as Float, dy as Float, frac as Float, color as Number,
+                                      icon as Number, value as String, valueColor as Number,
+                                      battFrac as Float) as Void {
+        var cx = X(dx);
+        var cy = Y(dy);
+
+        drawGaugeValue(dc, cx, cy, Meridian.SUB_R * _k, pen(GAUGE_PEN), frac, color);
+        drawIcon(dc, icon, cx, cy + ICON_DY * _k, ICON_SIZE * _k, color, true, battFrac);
+
+        dc.setColor(valueColor, Graphics.COLOR_TRANSPARENT);
+        drawStr(dc, cx, cy + VALUE_DY * _k, _valueFont, value,
+            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+    }
+
+    // Value arc over the track, round caps (a zero value still shows a dot, as in the design)
+    private function drawGaugeValue(dc as Dc, cx as Float, cy as Float, r as Float, p as Number,
+                                    frac as Float, color as Number) as Void {
         if (frac < 0.0) { frac = 0.0; }
         if (frac > 1.0) { frac = 1.0; }
-        var start = 225;
         var capR = p / 2.0;
 
         dc.setPenWidth(p);
-        dc.setColor(C_GRAPHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawArc(cx, cy, r, Graphics.ARC_CLOCKWISE, start, 315);
-        arcCap(dc, cx, cy, r, 315.0, capR);
-
-        // Value arc, round caps (a zero value still shows a dot, as in the design)
         dc.setColor(color, Graphics.COLOR_TRANSPARENT);
         var sweep = (270 * frac).toNumber();
         if (sweep >= 1) {
-            var end = start - sweep;
+            var end = GAUGE_START - sweep;
             if (end < 0) { end += 360; }
-            dc.drawArc(cx, cy, r, Graphics.ARC_CLOCKWISE, start, end);
+            dc.drawArc(cx, cy, r, Graphics.ARC_CLOCKWISE, GAUGE_START, end);
         }
-        arcCap(dc, cx, cy, r, start.toFloat(), capR);
-        arcCap(dc, cx, cy, r, start - 270.0 * frac, capR);
+        arcCap(dc, cx, cy, r, GAUGE_START.toFloat(), capR);
+        arcCap(dc, cx, cy, r, GAUGE_START - 270.0 * frac, capR);
         dc.setPenWidth(1);
     }
 
@@ -252,32 +387,42 @@ class MeridianView extends WatchUi.WatchFace {
         dc.fillCircle(cx + r * Math.cos(a), cy - r * Math.sin(a), capR);
     }
 
-    // Date window at 12: "THU" (ash, tracked) + "19" (accent)
+    // Date window at 12: "THU" (ash, tracked) + "19" (accent), border sized to the text
     private function drawDateWindow(dc as Dc) as Void {
+        var w = drawDateText(dc, DATE_Y, _dateFont, _accent);
+        var bw = w + 2 * DATE_PAD * _k;
+        var bh = DATE_H * _k;
         dc.setColor(C_DATE_EDGE, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(1);
-        dc.drawRoundedRectangle(X(189.0), Y(105.0), 76 * _k, 28 * _k, 6 * _k);
-        drawDateText(dc, 119.0, _dateFont, _accent);
+        dc.drawRoundedRectangle(X(Meridian.C) - bw / 2, Y(DATE_Y) - bh / 2, bw, bh, 6 * _k);
     }
 
-    private function drawDateText(dc as Dc, dy as Float,
-                                  numFont as Graphics.VectorFont or Graphics.FontDefinition,
-                                  numColor as Number) as Void {
-        var info = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
-        var day = info.day_of_week.toString().toUpper();
-        var num = info.day.toString();
-        var track = 10 * 0.18 * _k;
-        var gap = 8 * _k;
-        var dayW = spacedWidth(dc, _dayFont, day, track);
-        var numW = dc.getTextWidthInPixels(num, numFont);
-        var left = X(Meridian.C) - (dayW + gap + numW) / 2;
+    // Draws the day + date number centered at design y, returns the total width.
+    // Day names Roboto cannot render (Arabic, Hebrew, CJK, Thai...) go through
+    // the system font, which follows the device language, untracked and whole
+    // so the system keeps letter shaping and right-to-left order.
+    private function drawDateText(dc as Dc, dy as Float, numFont as Meridian.Font, numColor as Number) as Float {
+        var day = _dayText;
+        var num = _numText;
+        var dayFont = _dayIsRoboto ? _dayFont : Graphics.FONT_XTINY;
+        var track = _dayIsRoboto ? DAY_PX * 0.18 * _k : 0.0;
+        var dayW = spacedWidth(dc, dayFont, day, track, _dayIsRoboto);
+        var gap = DATE_GAP * _k;
+        var total = dayW + gap + dc.getTextWidthInPixels(num, numFont);
+        var left = X(Meridian.C) - total / 2;
         var cy = Y(dy);
 
         dc.setColor(C_ASH, Graphics.COLOR_TRANSPARENT);
-        drawSpaced(dc, left + dayW / 2, cy, _dayFont, day, track);
+        if (_dayIsRoboto) {
+            drawSpaced(dc, left + dayW / 2, cy, dayFont, day, track);
+        } else {
+            dc.drawText(left + dayW / 2, cy, dayFont, day,
+                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        }
         dc.setColor(numColor, Graphics.COLOR_TRANSPARENT);
         drawStr(dc, left + dayW + gap, cy, numFont, num,
             Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
+        return total;
     }
 
     // Faceted hour/minute hands, accent seconds hand with counterweight ring
@@ -293,9 +438,9 @@ class MeridianView extends WatchUi.WatchFace {
 
         if (_showSeconds) {
             var secDeg = s * 6.0;
-            var tail = rot(227.0, 270.0, secDeg);
-            var tip = rot(227.0, 32.0, secDeg);
-            var ring = rot(227.0, 256.0, secDeg);
+            var tail = rot(Meridian.C, 270.0, secDeg);
+            var tip = rot(Meridian.C, 32.0, secDeg);
+            var ring = rot(Meridian.C, 256.0, secDeg);
             dc.setColor(_accent, Graphics.COLOR_TRANSPARENT);
             dc.setPenWidth(pen(1.6));
             dc.drawLine(tail[0], tail[1], tip[0], tip[1]);
@@ -326,52 +471,51 @@ class MeridianView extends WatchUi.WatchFace {
     // =====================================================================
     // Always-on: dim outlines, few pixels, whole layout shifted each minute
     // =====================================================================
-    // AMOLED rule: no pixel may stay lit for more than ~3 minutes. Everything
-    // jumps diagonally each minute (both axes flip, so no 1-4 px stroke lands on
-    // itself in consecutive minutes) and drifts over a 30-minute cycle.
+    // Each minute the layout moves to the next of 25 offsets on a 5x5 grid
+    // (AOD_STEP apart, within ±2 steps), so no offset repeats for 25 minutes.
+    // Consecutive minutes move at least 2 steps on both axes (y can stay put
+    // once a day, at midnight) and the direction changes from minute to
+    // minute, which spreads wear. A thin stroke that happens to lie along one
+    // jump can still overlap itself for that one minute.
     private function drawAlwaysOn(dc as Dc, clock as System.ClockTime) as Void {
-        var step = 5 * _k;
-        var flip = (clock.min % 2 == 0) ? -1 : 1;
-        _ox = flip * step + ((clock.min / 2) % 5 - 2) * step / 2;
-        _oy = flip * step + ((clock.min / 10) % 3 - 1) * step / 2;
+        var slot = (clock.hour * 60 + clock.min) % 25;
+        var step = AOD_STEP * _k;
+        _ox = ((3 * slot) % 5 - 2) * step;
+        _oy = ((2 * slot + slot / 5) % 5 - 2) * step;
 
         // Hour dots, champagne mark at 12
         dc.setColor(C_AOD_DOT, Graphics.COLOR_TRANSPARENT);
         for (var i = 1; i < 12; i++) {
-            var p = rot(227.0, 27.0, i * 30.0);
+            var p = rot(Meridian.C, AOD_DOT_Y, i * 30.0);
             dc.fillCircle(p[0], p[1], 2 * _k);
         }
         dc.setColor(C_AOD_MARK, Graphics.COLOR_TRANSPARENT);
-        dc.fillCircle(X(227.0), Y(27.0), 3 * _k);
+        dc.fillCircle(X(Meridian.C), Y(AOD_DOT_Y), 3 * _k);
 
         // Date, no window
-        drawDateText(dc, 119.0, _aodDateFont, C_AOD_LINE);
+        drawDateText(dc, DATE_Y, _aodFont, C_AOD_LINE);
 
         // Metrics row: heart · Body Battery · battery %
-        var hr = getHeartRate();
-        var bb = getBodyBattery();
-        var batt = System.getSystemStats().battery;
-        var texts = [
-            (hr != null && hr > 0) ? hr.toString() : "--",
-            (bb != null) ? bb.toString() : "--",
-            batt.format("%d") + "%"
-        ];
+        var texts = [metricText(_hr), metricText(_bb), _batt.toString() + "%"];
         var icons = [ICON_HEART, ICON_BOLT, ICON_BATT];
-        var iconW = [11 * _k, 11 * _k, 13 * _k];
-        var iconGap = 6 * _k;
-        var itemGap = 18 * _k;
+        var iconSize = 20 * _k;
+        var iconW = [iconSize, iconSize, iconSize * 26 / 24];   // battery viewBox is 26 wide
+        var iconGap = 8 * _k;
+        var itemGap = 26 * _k;
+        var textW = new Array<Number>[3];
         var total = itemGap * 2;
         for (var j = 0; j < 3; j++) {
-            total += iconW[j] + iconGap + dc.getTextWidthInPixels(texts[j], _aodFont);
+            textW[j] = dc.getTextWidthInPixels(texts[j], _aodFont);
+            total += iconW[j] + iconGap + textW[j];
         }
         var x = X(Meridian.C) - total / 2;
-        var y = Y(329.0);
+        var y = Y(AOD_ROW_Y);
         for (var j = 0; j < 3; j++) {
-            drawIcon(dc, icons[j], x + iconW[j] / 2, y, 11 * _k, C_ASH, false, 0.0);
+            drawIcon(dc, icons[j], x + iconW[j] / 2, y, iconSize, C_ASH, false, 0.0);
             x += iconW[j] + iconGap;
             dc.setColor(C_ASH, Graphics.COLOR_TRANSPARENT);
             drawStr(dc, x, y, _aodFont, texts[j], Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
-            x += dc.getTextWidthInPixels(texts[j], _aodFont) + itemGap;
+            x += textW[j] + itemGap;
         }
 
         // Outlined hands, no seconds
@@ -412,7 +556,7 @@ class MeridianView extends WatchUi.WatchFace {
         }
         var src = (kind == ICON_HEART) ? HEART : BOLT;
         var n = src.size() / 2;
-        var pts = new Array<[Numeric, Numeric]>[n];
+        var pts = new Array<Graphics.Point2D>[n];
         for (var i = 0; i < n; i++) {
             pts[i] = [cx + (src[2 * i] - 12) * sc, cy + (src[2 * i + 1] - 12) * sc];
         }
@@ -428,8 +572,8 @@ class MeridianView extends WatchUi.WatchFace {
     // =====================================================================
     // Geometry + text helpers
     // =====================================================================
-    private function X(v as Float) as Float { return v * _k + _ox; }
-    private function Y(v as Float) as Float { return v * _k + _oy; }
+    private function X(v as Numeric) as Float { return (v * _k + _ox).toFloat(); }
+    private function Y(v as Numeric) as Float { return (v * _k + _oy).toFloat(); }
 
     // Pen width from a design-space stroke width
     private function pen(designW as Float) as Number {
@@ -438,7 +582,7 @@ class MeridianView extends WatchUi.WatchFace {
     }
 
     // Design point rotated clockwise about the center, in screen px
-    private function rot(x as Float, y as Float, deg as Float) as [Float, Float] {
+    private function rot(x as Float, y as Float, deg as Float) as Graphics.Point2D {
         var a = Math.toRadians(deg);
         var c = Math.cos(a);
         var s = Math.sin(a);
@@ -461,7 +605,7 @@ class MeridianView extends WatchUi.WatchFace {
         dc.fillPolygon([rot(x, y, deg), rot(x + w, y, deg), rot(x + w, y + h, deg), rot(x, y + h, deg)]);
     }
 
-    private function handPoints(shape as Array<Float>, deg as Float) as Array<[Float, Float]> {
+    private function handPoints(shape as Array<Float>, deg as Float) as Array<Graphics.Point2D> {
         return [
             rot(shape[0], shape[1], deg),
             rot(shape[2], shape[3], deg),
@@ -470,7 +614,7 @@ class MeridianView extends WatchUi.WatchFace {
         ];
     }
 
-    private function outline(dc as Dc, pts as Array<[Numeric, Numeric]>) as Void {
+    private function outline(dc as Dc, pts as Array<Graphics.Point2D>) as Void {
         var n = pts.size();
         for (var i = 0; i < n; i++) {
             var a = pts[i];
@@ -480,8 +624,7 @@ class MeridianView extends WatchUi.WatchFace {
     }
 
     // Vector fonts go through drawAngledText (angle 0), bitmap fonts through drawText
-    private function drawStr(dc as Dc, x as Numeric, y as Numeric,
-                             font as Graphics.VectorFont or Graphics.FontDefinition,
+    private function drawStr(dc as Dc, x as Numeric, y as Numeric, font as Meridian.Font,
                              text as String, just as Number) as Void {
         if (font instanceof Graphics.VectorFont) {
             dc.drawAngledText(x, y, font, text, just, 0);
@@ -491,10 +634,9 @@ class MeridianView extends WatchUi.WatchFace {
     }
 
     // Letter-spaced text (the design's tracked labels), centered on cx
-    private function drawSpaced(dc as Dc, cx as Float, cy as Float,
-                                font as Graphics.VectorFont or Graphics.FontDefinition,
+    private function drawSpaced(dc as Dc, cx as Float, cy as Float, font as Meridian.Font,
                                 text as String, track as Float) as Void {
-        var x = cx - spacedWidth(dc, font, text, track) / 2;
+        var x = cx - spacedWidth(dc, font, text, track, true) / 2;
         var chars = text.toCharArray();
         for (var i = 0; i < chars.size(); i++) {
             var ch = chars[i].toString();
@@ -503,8 +645,12 @@ class MeridianView extends WatchUi.WatchFace {
         }
     }
 
-    private function spacedWidth(dc as Dc, font as Graphics.VectorFont or Graphics.FontDefinition,
-                                 text as String, track as Float) as Float {
+    // Width of text drawn by drawSpaced (perChar) or as one run (drawText)
+    private function spacedWidth(dc as Dc, font as Meridian.Font, text as String, track as Float,
+                                 perChar as Boolean) as Float {
+        if (!perChar) {
+            return dc.getTextWidthInPixels(text, font).toFloat();
+        }
         var chars = text.toCharArray();
         var w = 0.0;
         for (var i = 0; i < chars.size(); i++) {
@@ -516,46 +662,125 @@ class MeridianView extends WatchUi.WatchFace {
         return w;
     }
 
+    // True when Roboto has glyphs for every character: Latin (incl. Vietnamese),
+    // Greek, Cyrillic.
+    private function isRobotoText(s as String) as Boolean {
+        var chars = s.toCharArray();
+        for (var i = 0; i < chars.size(); i++) {
+            var cp = chars[i].toNumber();
+            if (cp >= 0x0500 && (cp < 0x1E00 || cp > 0x1EFF)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     // =====================================================================
     // Data
     // =====================================================================
-    private function getHeartRate() as Number or Null {
-        var info = Activity.getActivityInfo();
-        if (info != null && info.currentHeartRate != null) {
-            return info.currentHeartRate;
+    // Live heart rate and battery every frame; history samples and the date at
+    // most once a minute; Body Battery as the complication pushes it.
+    private function updateData(clock as System.ClockTime) as Void {
+        var minute = clock.hour * 60 + clock.min;
+        if (minute != _minute) {
+            _minute = minute;
+            _hrStale = true;
+            _bbStale = true;
+            refreshDate();
         }
-        var it = ActivityMonitor.getHeartRateHistory(1, true);
-        var sample = it.next();
-        if (sample != null && sample.heartRate != ActivityMonitor.INVALID_HR_SAMPLE) {
-            return sample.heartRate;
+
+        var hr = liveHeartRate();
+        if (hr == null) {
+            if (_hrStale) {
+                _hrHistory = historyHeartRate();
+                _hrStale = false;
+            }
+            hr = _hrHistory;
+        }
+        _hr = hr;
+
+        var bb = _bbLive;
+        if (bb == null) {
+            if (_bbStale) {
+                _bbHistory = historyBodyBattery();
+                _bbStale = false;
+            }
+            bb = _bbHistory;
+        }
+        _bb = bb;
+
+        _batt = batteryPercent();
+    }
+
+    private function refreshDate() as Void {
+        var info = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
+        var day = info.day_of_week.toString().toUpper();
+        var num = info.day.toString();
+        if (!day.equals(_dayText) || !num.equals(_numText)) {
+            _dayText = day;
+            _numText = num;
+            _dayIsRoboto = isRobotoText(day);
+            _layerDirty = true;
+        }
+    }
+
+    // "--" when there is no reading
+    private function metricText(v as Number?) as String {
+        return (v != null) ? v.toString() : "--";
+    }
+
+    // Rounded once, so the number shown and the low-battery color agree
+    private function batteryPercent() as Number {
+        var p = (System.getSystemStats().battery + 0.5).toNumber();
+        return (p < 0) ? 0 : ((p > 100) ? 100 : p);
+    }
+
+    private function liveHeartRate() as Number? {
+        var info = Activity.getActivityInfo();
+        if (info != null) {
+            var hr = info.currentHeartRate;
+            if (hr != null && hr > 0) {
+                return hr;
+            }
         }
         return null;
     }
 
-    // Live value from the Body Battery complication; falls back to the latest
-    // SensorHistory sample. Null when neither source has data.
-    private function getBodyBattery() as Number or Null {
-        if (Toybox has :Complications) {
-            try {
-                var c = Complications.getComplication(
-                    new Complications.Id(Complications.COMPLICATION_TYPE_BODY_BATTERY));
-                var v = c.value;
-                if (v instanceof Number || v instanceof Float || v instanceof Double) {
-                    return v.toNumber();
-                }
-            } catch (e) {
-                // complication unavailable on this device/firmware
+    private function historyHeartRate() as Number? {
+        var sample = ActivityMonitor.getHeartRateHistory(1, true).next();
+        if (sample != null) {
+            var hr = sample.heartRate;
+            if (hr != null && hr != ActivityMonitor.INVALID_HR_SAMPLE && hr > 0) {
+                return hr;
             }
         }
+        return null;
+    }
+
+    private function historyBodyBattery() as Number? {
         if ((Toybox has :SensorHistory) && (SensorHistory has :getBodyBatteryHistory)) {
-            var it = SensorHistory.getBodyBatteryHistory({
+            var sample = SensorHistory.getBodyBatteryHistory({
                 :period => 1,
                 :order => SensorHistory.ORDER_NEWEST_FIRST
-            });
-            var sample = it.next();
-            if (sample != null && sample.data != null) {
-                return sample.data.toNumber();
+            }).next();
+            if (sample != null) {
+                var d = sample.data;
+                if (d != null) {
+                    return d.toNumber();
+                }
             }
+        }
+        return null;
+    }
+
+    private function complicationNumber(id as Complications.Id) as Number? {
+        try {
+            var v = Complications.getComplication(id).value;
+            if (v != null && !(v instanceof String)) {
+                return (v as Numeric).toNumber();
+            }
+        } catch (e) {
+            // complication unavailable on this device/firmware
         }
         return null;
     }
