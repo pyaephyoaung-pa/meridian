@@ -1,0 +1,16 @@
+<strings>
+    <string id="AppName">Meridian</string>
+    <!-- BPM stays in English -->
+    <string id="LabelHeartRate">BPM</string>
+    <string id="LabelBodyBattery">ÉNERGIE</string>
+    <string id="SettingsGroupTitle">Apparence</string>
+    <string id="SettingsHelp">Maintenez appuyé un compteur (fréquence cardiaque, Body Battery ou batterie) pour ouvrir son aperçu. ÉNERGIE correspond à votre Body Battery (0 à 100). -- signifie qu'aucune mesure n'est encore disponible. Avec l'accent Ivoire, la trotteuse reste couleur champagne.</string>
+    <string id="AccentTitle">Couleur d'accent</string>
+    <string id="AccentChampagne">Champagne</string>
+    <string id="AccentIvory">Ivoire</string>
+    <string id="AccentSky">Ciel</string>
+    <string id="AccentRose">Rose</string>
+    <string id="ShowSecondsTitle">Trotteuse</string>
+    <string id="LabelBattery">BATTERIE</string>
+    <string id="LabelBatteryLow">FAIBLE</string>
+</strings>

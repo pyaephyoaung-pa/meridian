@@ -1,0 +1,16 @@
+<strings>
+    <string id="AppName">Meridian</string>
+    <!-- BPM stays in English -->
+    <string id="LabelHeartRate">BPM</string>
+    <string id="LabelBodyBattery">ENERGIA</string>
+    <string id="SettingsGroupTitle">Aparência</string>
+    <string id="SettingsHelp">Mantenha pressionado um indicador (frequência cardíaca, Body Battery ou bateria) para abrir o resumo correspondente. ENERGIA é a sua Body Battery (0–100). -- significa que ainda não há leitura. Com o destaque Marfim, o ponteiro dos segundos continua cor de champanhe.</string>
+    <string id="AccentTitle">Cor de destaque</string>
+    <string id="AccentChampagne">Champanhe</string>
+    <string id="AccentIvory">Marfim</string>
+    <string id="AccentSky">Céu</string>
+    <string id="AccentRose">Rosa</string>
+    <string id="ShowSecondsTitle">Ponteiro dos segundos</string>
+    <string id="LabelBattery">BATERIA</string>
+    <string id="LabelBatteryLow">BAIXA</string>
+</strings>

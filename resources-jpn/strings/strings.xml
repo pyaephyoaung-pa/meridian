@@ -1,0 +1,16 @@
+<strings>
+    <string id="AppName">Meridian</string>
+    <!-- BPM stays in English -->
+    <string id="LabelHeartRate">BPM</string>
+    <string id="LabelBodyBattery">体力</string>
+    <string id="SettingsGroupTitle">表示</string>
+    <string id="SettingsHelp">心拍数・Body Battery・バッテリーの各表示を長押しすると、対応するグランスが開きます。「体力」はBody Battery（0〜100）です。「--」はまだ測定値がないことを示します。アイボリーのアクセントでは、秒針はシャンパンのままです。</string>
+    <string id="AccentTitle">アクセントカラー</string>
+    <string id="AccentChampagne">シャンパン</string>
+    <string id="AccentIvory">アイボリー</string>
+    <string id="AccentSky">スカイ</string>
+    <string id="AccentRose">ローズ</string>
+    <string id="ShowSecondsTitle">秒針</string>
+    <string id="LabelBattery">電池</string>
+    <string id="LabelBatteryLow">残量低下</string>
+</strings>

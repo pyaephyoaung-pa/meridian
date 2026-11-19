@@ -1,0 +1,16 @@
+<strings>
+    <string id="AppName">Meridian</string>
+    <!-- BPM stays in English -->
+    <string id="LabelHeartRate">BPM</string>
+    <string id="LabelBodyBattery">ENERGIA</string>
+    <string id="SettingsGroupTitle">Aspetto</string>
+    <string id="SettingsHelp">Tieni premuto un indicatore (frequenza cardiaca, Body Battery o batteria) per aprire la relativa anteprima. ENERGIA è la tua Body Battery (0–100). -- indica che non c'è ancora una lettura. Con l'accento Avorio, la lancetta dei secondi resta color champagne.</string>
+    <string id="AccentTitle">Colore d'accento</string>
+    <string id="AccentChampagne">Champagne</string>
+    <string id="AccentIvory">Avorio</string>
+    <string id="AccentSky">Cielo</string>
+    <string id="AccentRose">Rosa</string>
+    <string id="ShowSecondsTitle">Lancetta dei secondi</string>
+    <string id="LabelBattery">BATTERIA</string>
+    <string id="LabelBatteryLow">BASSA</string>
+</strings>
