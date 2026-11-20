@@ -2,8 +2,25 @@
     <string id="AppName">Meridian</string>
 
     <!-- Settings (Garmin Connect) -->
+    <string id="GaugesTitle">Gauges</string>
+    <string id="GaugesHelp">Choose what each gauge shows. Press and hold a gauge to open that metric's Garmin glance. ENERGY is your Body Battery (0–100), KCAL your calories and BRPM your breaths per minute. INTENSITY counts this week's intensity minutes. -- means there is no reading yet, or your watch doesn't offer that metric.</string>
+    <string id="GaugeLeftTitle">Left gauge (9 o'clock)</string>
+    <string id="GaugeRightTitle">Right gauge (3 o'clock)</string>
+    <string id="GaugeBottomTitle">Bottom gauge (6 o'clock)</string>
+    <string id="MetricHeartRate">Heart rate</string>
+    <string id="MetricBodyBattery">Body Battery</string>
+    <string id="MetricBattery">Watch battery</string>
+    <string id="MetricStress">Stress</string>
+    <string id="MetricSteps">Steps</string>
+    <string id="MetricFloors">Floors climbed</string>
+    <string id="MetricIntensity">Intensity minutes (this week)</string>
+    <string id="MetricCalories">Calories</string>
+    <string id="MetricPulseOx">Pulse Ox</string>
+    <string id="MetricRespiration">Respiration</string>
+    <string id="MetricSleep">Sleep score</string>
+
     <string id="SettingsGroupTitle">Appearance</string>
-    <string id="SettingsHelp">Press and hold a register (heart rate, Body Battery or battery) to open its glance. ENERGY is your Body Battery (0–100). -- means there is no reading yet. With the Ivory accent, the seconds hand stays champagne.</string>
+    <string id="SettingsHelp">With the Ivory accent, the seconds hand stays champagne.</string>
     <string id="AccentTitle">Accent color</string>
     <string id="AccentChampagne">Champagne</string>
     <string id="AccentIvory">Ivory</string>
@@ -12,11 +29,22 @@
     <string id="ShowSecondsTitle">Seconds hand</string>
 
     <!-- Register labels on the face. Keep them short: they sit under each
-         register, no wider than the register itself. The Body Battery
-         register says ENERGY (what the 0-100 score measures); the settings
-         help text ties it to Body Battery. -->
+         register, no wider than the register itself (BATTERY is about the
+         widest that fits). Units stay in English like BPM: KCAL, SPO2, BRPM.
+         The Body Battery register says ENERGY (what the 0-100 score
+         measures); the settings help text ties it to Body Battery. -->
     <string id="LabelHeartRate">BPM</string>
     <string id="LabelBodyBattery">ENERGY</string>
     <string id="LabelBattery">BATTERY</string>
     <string id="LabelBatteryLow">LOW</string>
+    <string id="LabelStress">STRESS</string>
+    <string id="LabelSteps">STEPS</string>
+    <string id="LabelFloors">FLOORS</string>
+    <string id="LabelIntensity">INTENSITY</string>
+    <string id="LabelCalories">KCAL</string>
+    <string id="LabelPulseOx">SPO2</string>
+    <string id="LabelRespiration">BRPM</string>
+    <string id="LabelSleep">SLEEP</string>
+    <!-- Decimal separator in shortened values ("12.3k" / "12,3k") -->
+    <string id="DecimalSeparator">.</string>
 </strings>

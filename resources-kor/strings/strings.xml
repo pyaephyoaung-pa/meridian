@@ -4,7 +4,7 @@
     <string id="LabelHeartRate">BPM</string>
     <string id="LabelBodyBattery">에너지</string>
     <string id="SettingsGroupTitle">표시</string>
-    <string id="SettingsHelp">심박수, Body Battery, 배터리 표시를 길게 누르면 해당 글랜스가 열립니다. 에너지는 Body Battery(0~100)를 나타냅니다. --는 아직 측정값이 없다는 뜻입니다. 아이보리 강조 색상에서는 초침이 샴페인 색으로 유지됩니다.</string>
+    <string id="SettingsHelp">아이보리 강조 색상에서는 초침이 샴페인 색으로 유지됩니다.</string>
     <string id="AccentTitle">강조 색상</string>
     <string id="AccentChampagne">샴페인</string>
     <string id="AccentIvory">아이보리</string>
@@ -13,4 +13,32 @@
     <string id="ShowSecondsTitle">초침</string>
     <string id="LabelBattery">배터리</string>
     <string id="LabelBatteryLow">부족</string>
+
+    <!-- Gauges (settings) and the new register labels; units stay in English -->
+    <string id="GaugesTitle">게이지</string>
+    <string id="GaugesHelp">각 게이지에 표시할 항목을 선택하세요. 게이지를 길게 누르면 해당 항목의 Garmin 글랜스가 열립니다. 에너지는 Body Battery(0~100), KCAL은 칼로리, BRPM은 분당 호흡수입니다. 강도는 이번 주 운동 강도 시간입니다. --는 아직 측정값이 없거나 시계가 해당 항목을 지원하지 않는다는 뜻입니다.</string>
+    <string id="GaugeLeftTitle">왼쪽 게이지(9시)</string>
+    <string id="GaugeRightTitle">오른쪽 게이지(3시)</string>
+    <string id="GaugeBottomTitle">아래쪽 게이지(6시)</string>
+    <string id="MetricHeartRate">심박수</string>
+    <string id="MetricBodyBattery">Body Battery</string>
+    <string id="MetricBattery">시계 배터리</string>
+    <string id="MetricStress">스트레스</string>
+    <string id="MetricSteps">걸음 수</string>
+    <string id="MetricFloors">오른 층수</string>
+    <string id="MetricIntensity">운동 강도 시간(이번 주)</string>
+    <string id="MetricCalories">칼로리</string>
+    <string id="MetricPulseOx">펄스옥스</string>
+    <string id="MetricRespiration">호흡</string>
+    <string id="MetricSleep">수면 점수</string>
+    <string id="LabelStress">스트레스</string>
+    <string id="LabelSteps">걸음</string>
+    <string id="LabelFloors">층수</string>
+    <string id="LabelIntensity">강도</string>
+    <string id="LabelSleep">수면</string>
+    <string id="LabelCalories">KCAL</string>
+    <string id="LabelPulseOx">SPO2</string>
+    <string id="LabelRespiration">BRPM</string>
+    <!-- Decimal separator in shortened values ("12.3k" / "12,3k") -->
+    <string id="DecimalSeparator">.</string>
 </strings>

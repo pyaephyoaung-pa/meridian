@@ -11,8 +11,9 @@ import Toybox.Time;
 import Toybox.Time.Gregorian;
 import Toybox.WatchUi;
 
-// Meridian — three-register analog face for Venu 4.
-// Heart rate at 9, Body Battery at 3, watch battery at 6, date at 12.
+// Meridian — three-register analog face for Venu 4, date at 12.
+// Each register (9, 3 and 6 o'clock) shows a metric chosen in settings;
+// by default heart rate, Body Battery and watch battery.
 //
 // All geometry is written in the design's 454 px space (Venu 4 45mm) and
 // scaled by w/454 at draw time, so the 41mm (390 px) gets the same layout.
@@ -21,9 +22,53 @@ module Meridian {
     const SIZE   = 454.0;
     const C      = 227.0;    // center
     const SUB_R  = 58.0;     // subdial gauge radius
-    const HR_X   = 119.0;  const HR_Y   = 227.0;   // 9 o'clock
-    const BB_X   = 335.0;  const BB_Y   = 227.0;   // 3 o'clock
-    const BAT_X  = 227.0;  const BAT_Y  = 335.0;   // 6 o'clock
+
+    // Register slots: left (9 o'clock), right (3), bottom (6)
+    const SLOT_X = [119.0, 335.0, 227.0];
+    const SLOT_Y = [227.0, 227.0, 335.0];
+    const SLOT_KEYS = ["GaugeLeft", "GaugeRight", "GaugeBottom"];
+    const SLOT_DEFAULTS = [0, 1, 2];
+
+    // Metrics a register can show. The values are the settings' list values,
+    // so never renumber them; add new metrics at the end.
+    const M_HEART_RATE   = 0;
+    const M_BODY_BATTERY = 1;
+    const M_BATTERY      = 2;
+    const M_STRESS       = 3;
+    const M_STEPS        = 4;
+    const M_FLOORS       = 5;
+    const M_INTENSITY    = 6;
+    const M_CALORIES     = 7;
+    const M_PULSE_OX     = 8;
+    const M_RESPIRATION  = 9;
+    const M_SLEEP        = 10;
+    const METRIC_COUNT   = 11;
+
+    // Garmin complication per metric: press-and-hold opens its glance, and
+    // for some metrics it also pushes the live value
+    const COMPLICATIONS = [
+        Complications.COMPLICATION_TYPE_HEART_RATE,
+        Complications.COMPLICATION_TYPE_BODY_BATTERY,
+        Complications.COMPLICATION_TYPE_BATTERY,
+        Complications.COMPLICATION_TYPE_STRESS,
+        Complications.COMPLICATION_TYPE_STEPS,
+        Complications.COMPLICATION_TYPE_FLOORS_CLIMBED,
+        Complications.COMPLICATION_TYPE_INTENSITY_MINUTES,
+        Complications.COMPLICATION_TYPE_CALORIES,
+        Complications.COMPLICATION_TYPE_PULSE_OX,
+        Complications.COMPLICATION_TYPE_RESPIRATION_RATE,
+        Complications.COMPLICATION_TYPE_SLEEP_SCORE
+    ];
+
+    // Metric shown in a slot, from settings; an unknown value falls back to
+    // that slot's default
+    function slotMetric(slot as Number) as Number {
+        var v = Application.Properties.getValue(SLOT_KEYS[slot] as String);
+        if (v instanceof Number && v >= 0 && v < METRIC_COUNT) {
+            return v;
+        }
+        return SLOT_DEFAULTS[slot] as Number;
+    }
 
     typedef Font as Graphics.VectorFont or Graphics.FontDefinition;
 }
@@ -38,9 +83,6 @@ class MeridianView extends WatchUi.WatchFace {
     private const C_FACET     = 0xD9CFBC;  // hand facets, light so the whole hand reads bright
     private const C_GRAPHITE  = 0x2B2925;  // gauge tracks (decorative; the scale ends are marked)
     private const C_ASH       = 0x8F897D;  // labels
-    private const C_ROSE      = 0xE8735E;  // heart rate
-    private const C_SKY       = 0x6DB5E3;  // Body Battery
-    private const C_SAGE      = 0xA8CF96;  // watch battery
     private const C_AMBER     = 0xF29A45;  // battery at 20% or less
     private const C_TICK_MIN  = 0x8A8478;  // minute ticks (5.7:1; 3:1 was near-invisible on device)
     private const C_TICK_5    = 0xA39C8E;  // gauge end-of-scale tick
@@ -50,30 +92,74 @@ class MeridianView extends WatchUi.WatchFace {
     private const C_CHAMPAGNE = 0xD4B37A;
     // Always-on
     private const C_AOD_DOT   = 0x6B665C;
+    private const C_AOD_AMBER = 0xC27E3D;  // low battery in the metrics row, dimmed like the rest
     private const C_AOD_MARK  = 0x9C8559;
     private const C_AOD_LINE  = 0xA39C8E;
 
     // Accent (setting AccentColor): Champagne, Ivory, Sky, Rose
     private const ACCENTS = [0xD4B37A, 0xEDE6D6, 0x6DB5E3, 0xE8735E];
 
-    // Icons in a 24-unit viewBox (heart sampled from the design's SVG path)
-    private const HEART = [
-        12.0, 20.5, 10.8, 19.7, 8.0, 17.6, 4.9, 14.7, 2.7, 11.3, 2.3, 8.8,
-        3.0, 6.6, 4.7, 5.1, 7.0, 4.5, 8.4, 4.7, 9.7, 5.3, 10.9, 6.2,
-        12.0, 7.4, 13.1, 6.2, 14.3, 5.3, 15.6, 4.7, 17.0, 4.5, 19.3, 5.1,
-        21.0, 6.6, 21.7, 8.8, 21.3, 11.3, 19.1, 14.7, 16.0, 17.6, 13.2, 19.7
+    // Gauge and icon color per metric (Meridian.M_*), all >= 3:1 on black
+    private const METRIC_COLORS = [
+        0xE8735E,  // heart rate: rose
+        0x6DB5E3,  // Body Battery: sky
+        0xA8CF96,  // watch battery: sage (amber when low)
+        0xB79CE6,  // stress: lavender
+        0x6CC4B0,  // steps: teal
+        0xC9B48A,  // floors: khaki
+        0xE6C35C,  // intensity minutes: gold
+        0xF0885A,  // calories: orange
+        0xE87A9A,  // Pulse Ox: pink
+        0x7DD3E8,  // respiration: aqua
+        0x8E9CF0   // sleep score: indigo
     ];
-    private const BOLT = [13.5, 2.0, 5.0, 13.5, 11.2, 13.5, 10.0, 22.0, 18.5, 10.5, 12.3, 10.5];
+
+    // Icons per metric in a 24-unit viewBox, as drawing ops:
+    // [0, x0, y0, ...] polygon (filled on the main face, outlined in always-on),
+    // [1, x0, y0, ...] polyline, [2, cx, cy, r] circle. The battery icon is
+    // drawn separately (it shows the charge level). Heart sampled from the
+    // design's SVG path.
+    private const ICONS = [
+        [[0.0, 12.0, 20.5, 10.8, 19.7, 8.0, 17.6, 4.9, 14.7, 2.7, 11.3, 2.3, 8.8,
+          3.0, 6.6, 4.7, 5.1, 7.0, 4.5, 8.4, 4.7, 9.7, 5.3, 10.9, 6.2,
+          12.0, 7.4, 13.1, 6.2, 14.3, 5.3, 15.6, 4.7, 17.0, 4.5, 19.3, 5.1,
+          21.0, 6.6, 21.7, 8.8, 21.3, 11.3, 19.1, 14.7, 16.0, 17.6, 13.2, 19.7]],
+        [[0.0, 13.5, 2.0, 5.0, 13.5, 11.2, 13.5, 10.0, 22.0, 18.5, 10.5, 12.3, 10.5]],
+        [],
+        // stress: jagged line
+        [[1.0, 2.0, 12.0, 6.0, 5.0, 10.0, 19.0, 14.0, 5.0, 18.0, 19.0, 22.0, 12.0]],
+        // steps: two footprints (sole + heel each)
+        [[0.0, 11.0, 6.4, 11.1, 9.2, 10.2, 11.4, 8.5, 12.5, 6.6, 12.2, 4.8, 10.5, 3.8, 8.0, 3.7, 5.2, 4.6, 3.0, 6.3, 1.9, 8.2, 2.2, 10.0, 3.9],
+         [0.0, 9.2, 15.8, 9.0, 17.3, 7.8, 18.5, 6.1, 18.8, 4.6, 18.3, 3.8, 17.0, 4.0, 15.5, 5.2, 14.3, 6.9, 14.0, 8.4, 14.5],
+         [0.0, 20.2, 11.4, 19.2, 13.9, 17.4, 15.6, 15.5, 15.9, 13.8, 14.8, 12.9, 12.6, 13.0, 9.8, 14.0, 7.3, 15.8, 5.6, 17.7, 5.3, 19.4, 6.4, 20.3, 8.6],
+         [0.0, 20.2, 20.4, 19.4, 21.7, 17.9, 22.2, 16.2, 21.9, 15.0, 20.7, 14.8, 19.2, 15.6, 17.9, 17.1, 17.4, 18.8, 17.7, 20.0, 18.9]],
+        // floors: stairs
+        [[0.0, 3.0, 21.0, 3.0, 16.5, 8.0, 16.5, 8.0, 12.0, 13.0, 12.0, 13.0, 7.5, 18.0, 7.5, 18.0, 3.0, 21.0, 3.0, 21.0, 21.0]],
+        // intensity minutes: stopwatch
+        [[2.0, 12.0, 13.5, 7.5], [1.0, 12.0, 13.5, 12.0, 9.0], [1.0, 12.0, 13.5, 15.0, 15.5],
+         [1.0, 9.5, 3.0, 14.5, 3.0], [1.0, 12.0, 3.0, 12.0, 6.0]],
+        // calories: flame, with a side tongue so it doesn't read as the Pulse Ox drop
+        [[0.0, 13.0, 1.5, 16.5, 6.5, 19.0, 11.0, 19.5, 15.0, 17.5, 19.5, 13.5, 22.0, 10.5, 22.0,
+          6.5, 19.5, 4.5, 15.5, 5.0, 11.5, 7.0, 7.5, 9.0, 12.5, 10.5, 7.5, 12.0, 4.5]],
+        // Pulse Ox: drop
+        [[0.0, 12.0, 2.5, 15.5, 8.0, 18.5, 12.5, 19.0, 16.0, 17.0, 19.8, 12.0, 21.8,
+          7.0, 19.8, 5.0, 16.0, 5.5, 12.5, 8.5, 8.0]],
+        // respiration: air waves
+        [[1.0, 3.0, 8.0, 6.0, 6.5, 9.0, 8.0, 12.0, 9.5, 15.0, 8.0],
+         [1.0, 3.0, 13.0, 7.0, 11.0, 11.0, 13.0, 15.0, 15.0, 19.0, 13.0, 21.0, 12.0],
+         [1.0, 3.0, 18.0, 6.0, 16.5, 9.0, 18.0, 12.0, 19.5, 15.0, 18.0]],
+        // sleep score: crescent moon
+        [[0.0, 20.7, 14.3, 19.8, 16.5, 18.4, 18.4, 16.5, 19.8, 14.3, 20.7, 12.0, 21.0, 9.7, 20.7,
+          7.5, 19.8, 5.6, 18.4, 4.2, 16.5, 3.3, 14.3, 3.0, 12.0, 3.3, 9.7, 4.2, 7.5, 5.6, 5.6,
+          7.5, 4.2, 9.7, 3.3, 9.8, 4.4, 9.0, 6.1, 8.8, 8.0, 9.0, 9.9, 9.8, 11.6, 10.9, 13.1,
+          12.4, 14.2, 14.1, 15.0, 16.0, 15.2, 17.9, 15.0, 19.6, 14.2]]
+    ];
 
     // Sword hands, design space, clockwise from the tip:
     // [tip, right shoulder, right base, tail, left base, left shoulder].
     // Hour 22 px wide reaching r130; minute 16 px wide reaching the minute track.
     private const HOUR_HAND   = [227.0,  97.0, 238.0, 134.0, 234.5, 212.0, 227.0, 249.0, 219.5, 212.0, 216.0, 134.0];
     private const MINUTE_HAND = [227.0,  23.0, 235.0,  66.0, 233.0, 212.0, 227.0, 251.0, 221.0, 212.0, 219.0,  66.0];
-
-    private const ICON_HEART = 0;
-    private const ICON_BOLT  = 1;
-    private const ICON_BATT  = 2;
 
     // ---- Layout, design px ----
     // Gauge: 270° opening at the bottom. Dc.drawArc degrees (0 = 3 o'clock,
@@ -83,9 +169,12 @@ class MeridianView extends WatchUi.WatchFace {
     private const GAUGE_PEN   = 4.0;
     private const RING_R      = 48.0;    // subdial inner hairline
     private const ICON_DY     = -33.0;   // register icon, value and label offsets
-    private const ICON_SIZE   = 16.0;
+    private const ICON_SIZE   = 20.0;    // fits inside the inner ring, clear of the value at 1.4x text
     private const VALUE_DY    = 1.0;
+    private const VALUE_MAX_W = 84.0;    // widest value inside the gauge ring, with a margin
+    private const AOD_VALUE_MAX_W = 64.0;  // per value in the always-on row
     private const LABEL_DY    = 54.0;    // just below the gauge's bottom opening, clear of its end caps
+    private const LABEL_MAX_W = 96.0;    // widest label before it is tightened (BATTERY fits as is)
     private const DATE_Y      = 119.0;
     private const DATE_H      = 44.0;
     private const DATE_PAD    = 12.0;
@@ -110,6 +199,12 @@ class MeridianView extends WatchUi.WatchFace {
     private const LABEL_SCALE_MAX = 1.15;
 
     private const LOW_BATTERY = 20;      // percent, amber + "LOW" label at or below
+    private const CALORIE_SCALE = 3000;  // kcal at a full calorie gauge (there is no calorie goal API)
+    // Oldest history sample shown when the live value is missing: Body Battery
+    // and stress are sampled every few minutes; Pulse Ox mostly overnight, so
+    // last night's reading still counts the next day
+    private const HISTORY_MAX_AGE  = 2 * 3600;    // s
+    private const PULSE_OX_MAX_AGE = 24 * 3600;   // s
 
     private const MODE_ON  = 0;
     private const MODE_AOD = 1;
@@ -130,6 +225,7 @@ class MeridianView extends WatchUi.WatchFace {
     private var _fontScale as Float = 1.0;
     private var _valueFont as Meridian.Font = Graphics.FONT_SMALL;
     private var _labelFont as Meridian.Font = Graphics.FONT_XTINY;
+    private var _labelFontSmall as Meridian.Font = Graphics.FONT_XTINY;   // for labels too wide at full size
     private var _dayFont   as Meridian.Font = Graphics.FONT_XTINY;
     private var _dateFont  as Meridian.Font = Graphics.FONT_TINY;
     private var _aodFont   as Meridian.Font = Graphics.FONT_TINY;
@@ -137,11 +233,14 @@ class MeridianView extends WatchUi.WatchFace {
     private var _cjkLabelFont as Graphics.VectorFont? = null;
     private var _cjkDayFont   as Graphics.VectorFont? = null;
 
-    // Register labels, from string resources so they follow the watch language
-    private var _lblHr as String = "BPM";
-    private var _lblBb as String = "ENERGY";
-    private var _lblBatt as String = "BATTERY";
+    // Register labels per metric, from string resources so they follow the
+    // watch language
+    private var _labels as Array<String> = [] as Array<String>;
     private var _lblLow as String = "LOW";
+    private var _decimalSep as String = ".";    // "12.3k" / "12,3k", from the watch language
+
+    // Metric in each slot (left, right, bottom), from settings
+    private var _slots as Array<Number> = [0, 1, 2] as Array<Number>;
 
     // Static parts of the main face (dial, gauge tracks, labels, date window),
     // rendered once and redrawn only when the accent, the date, the text size
@@ -149,38 +248,49 @@ class MeridianView extends WatchUi.WatchFace {
     private var _layer as Graphics.BufferedBitmap? = null;
     private var _layerDirty as Boolean = true;
 
-    // Data, refreshed by updateData()
-    private var _hr as Number? = null;
-    private var _bb as Number? = null;
-    private var _batt as Number = 0;
+    // Data, refreshed by updateData() for the metrics on the face. Indexed by
+    // metric (Meridian.M_*).
+    private var _val  as Array<Number?> = [] as Array<Number?>;   // value shown
+    private var _live as Array<Number?> = [] as Array<Number?>;   // pushed by complications
+    private var _hist as Array<Number?> = [] as Array<Number?>;   // per-minute history fallback
+    private var _goal as Array<Number?> = [] as Array<Number?>;   // step, floor, intensity goals
+    private var _stale as Number = -1;           // bit per metric: history due for a re-read
     private var _battLow as Boolean = false;
     private var _minute as Number = -1;          // clock minute of the last refresh
-    private var _hrHistory as Number? = null;    // per-minute fallbacks
-    private var _hrStale as Boolean = true;
-    private var _bbHistory as Number? = null;
-    private var _bbStale as Boolean = true;
-    private var _bbLive as Number? = null;       // pushed by the complication callback
     private var _dayText as String = "";
     private var _numText as String = "";
 
     function initialize() {
         WatchFace.initialize();
-        loadSettings();
-        _lblHr   = WatchUi.loadResource(Rez.Strings.LabelHeartRate) as String;
-        _lblBb   = WatchUi.loadResource(Rez.Strings.LabelBodyBattery) as String;
-        _lblBatt = WatchUi.loadResource(Rez.Strings.LabelBattery) as String;
-        _lblLow  = WatchUi.loadResource(Rez.Strings.LabelBatteryLow) as String;
+        var n = Meridian.METRIC_COUNT;
+        _val  = new Array<Number?>[n];
+        _live = new Array<Number?>[n];
+        _hist = new Array<Number?>[n];
+        _goal = new Array<Number?>[n];
+        _labels = [
+            WatchUi.loadResource(Rez.Strings.LabelHeartRate) as String,
+            WatchUi.loadResource(Rez.Strings.LabelBodyBattery) as String,
+            WatchUi.loadResource(Rez.Strings.LabelBattery) as String,
+            WatchUi.loadResource(Rez.Strings.LabelStress) as String,
+            WatchUi.loadResource(Rez.Strings.LabelSteps) as String,
+            WatchUi.loadResource(Rez.Strings.LabelFloors) as String,
+            WatchUi.loadResource(Rez.Strings.LabelIntensity) as String,
+            WatchUi.loadResource(Rez.Strings.LabelCalories) as String,
+            WatchUi.loadResource(Rez.Strings.LabelPulseOx) as String,
+            WatchUi.loadResource(Rez.Strings.LabelRespiration) as String,
+            WatchUi.loadResource(Rez.Strings.LabelSleep) as String
+        ] as Array<String>;
+        _lblLow = WatchUi.loadResource(Rez.Strings.LabelBatteryLow) as String;
+        _decimalSep = WatchUi.loadResource(Rez.Strings.DecimalSeparator) as String;
         _fontScale = readFontScale();
         if (Toybox has :Complications) {
-            var id = new Complications.Id(Complications.COMPLICATION_TYPE_BODY_BATTERY);
             try {
                 Complications.registerComplicationChangeCallback(method(:onComplicationChanged));
-                Complications.subscribeToUpdates(id);
             } catch (e) {
-                // complication unavailable on this device/firmware
+                // complications unavailable on this device/firmware
             }
-            _bbLive = complicationNumber(id);
         }
+        loadSettings();
     }
 
     function loadSettings() as Void {
@@ -193,7 +303,46 @@ class MeridianView extends WatchUi.WatchFace {
         _handAccent = (_accent == C_IVORY) ? C_CHAMPAGNE : _accent;
         var secs = Application.Properties.getValue("ShowSeconds");
         _showSeconds = !(secs instanceof Boolean) || secs;
+
+        _slots = [Meridian.slotMetric(0), Meridian.slotMetric(1), Meridian.slotMetric(2)] as Array<Number>;
+        subscribeSlots();
+        _stale = -1;          // read history for newly chosen metrics right away
+        _battLow = false;
         _layerDirty = true;
+    }
+
+    // Live updates only for the metrics on the face
+    private function subscribeSlots() as Void {
+        for (var m = 0; m < Meridian.METRIC_COUNT; m++) {
+            _live[m] = null;
+        }
+        if (!(Toybox has :Complications)) {
+            return;
+        }
+        try {
+            Complications.unsubscribeFromAllUpdates();
+        } catch (e) {
+            // nothing subscribed yet
+        }
+        for (var i = 0; i < 3; i++) {
+            var m = _slots[i];
+            if (pushedMetric(m)) {
+                var id = new Complications.Id(Meridian.COMPLICATIONS[m] as Complications.Type);
+                try {
+                    Complications.subscribeToUpdates(id);
+                } catch (e) {
+                    // not offered on this device/firmware: the register shows "--"
+                }
+                _live[m] = complicationNumber(id);
+            }
+        }
+    }
+
+    // Metrics whose value comes from a complication push. Heart rate and
+    // battery are read directly; the activity counters from ActivityMonitor.
+    private function pushedMetric(m as Number) as Boolean {
+        return m == Meridian.M_BODY_BATTERY || m == Meridian.M_STRESS || m == Meridian.M_PULSE_OX
+            || m == Meridian.M_RESPIRATION || m == Meridian.M_SLEEP;
     }
 
     function onLayout(dc as Dc) as Void {
@@ -251,6 +400,7 @@ class MeridianView extends WatchUi.WatchFace {
         var ls = (s > LABEL_SCALE_MAX) ? LABEL_SCALE_MAX : s;
         _valueFont = vectorFont(["RobotoRegular"], VALUE_PX * s, Graphics.FONT_SMALL);
         _labelFont = vectorFont(["RobotoCondensedRegular", "RobotoRegular"], LABEL_PX * ls, Graphics.FONT_XTINY);
+        _labelFontSmall = vectorFont(["RobotoCondensedRegular", "RobotoRegular"], LABEL_PX * ls * 0.82, Graphics.FONT_XTINY);
         _dayFont   = vectorFont(["RobotoRegular"], DAY_PX * s, Graphics.FONT_XTINY);
         _dateFont  = vectorFont(["RobotoMedium", "RobotoRegular"], DATE_PX * s, Graphics.FONT_TINY);
         _aodFont   = vectorFont(["RobotoRegular"], AOD_PX * s, Graphics.FONT_TINY);
@@ -288,10 +438,14 @@ class MeridianView extends WatchUi.WatchFace {
         WatchUi.requestUpdate();
     }
 
-    // Body Battery complication pushes (subscribed in initialize)
+    // Complication pushes for the metrics on the face (see subscribeSlots)
     function onComplicationChanged(id as Complications.Id) as Void {
-        if (id.getType() == Complications.COMPLICATION_TYPE_BODY_BATTERY) {
-            _bbLive = complicationNumber(id);
+        var t = id.getType();
+        for (var i = 0; i < 3; i++) {
+            var m = _slots[i];
+            if (pushedMetric(m) && Meridian.COMPLICATIONS[m] == t) {
+                _live[m] = complicationNumber(id);
+            }
         }
     }
 
@@ -363,11 +517,13 @@ class MeridianView extends WatchUi.WatchFace {
 
     private function drawStatic(dc as Dc) as Void {
         drawDial(dc);
-        drawSubdialFrame(dc, Meridian.HR_X, Meridian.HR_Y, _lblHr, C_ASH);
-        drawSubdialFrame(dc, Meridian.BB_X, Meridian.BB_Y, _lblBb, C_ASH);
-        // Low battery is spelled out, not only shown in amber
-        drawSubdialFrame(dc, Meridian.BAT_X, Meridian.BAT_Y,
-            _battLow ? _lblLow : _lblBatt, _battLow ? C_AMBER : C_ASH);
+        for (var i = 0; i < 3; i++) {
+            var m = _slots[i];
+            // Low battery is spelled out, not only shown in amber
+            var low = _battLow && m == Meridian.M_BATTERY;
+            drawSubdialFrame(dc, Meridian.SLOT_X[i] as Float, Meridian.SLOT_Y[i] as Float,
+                low ? _lblLow : _labels[m], low ? C_AMBER : C_ASH);
+        }
         drawDateWindow(dc);
     }
 
@@ -424,36 +580,68 @@ class MeridianView extends WatchUi.WatchFace {
         dc.drawLine(cx + r0 * c, cy + r0 * s, cx + r1 * c, cy + r1 * s);
         dc.setPenWidth(1);
 
+        // A label wider than the register (long metric names, translations)
+        // loses its letter-spacing first, then drops to the smaller font
+        var font = _labelFont;
+        var track = LABEL_PX * 0.05 * _k;
+        var maxW = LABEL_MAX_W * _k;
+        if (trackedWidth(dc, font, _cjkLabelFont, label, track) > maxW) {
+            track = 0.0;
+            if (trackedWidth(dc, font, _cjkLabelFont, label, track) > maxW) {
+                font = _labelFontSmall;
+            }
+        }
         dc.setColor(labelColor, Graphics.COLOR_TRANSPARENT);
-        drawTracked(dc, cx, cy + LABEL_DY * _k, _labelFont, _cjkLabelFont, label, LABEL_PX * 0.05 * _k);
+        drawTracked(dc, cx, cy + LABEL_DY * _k, font, _cjkLabelFont, label, track);
     }
 
     private function drawSubdialValues(dc as Dc) as Void {
-        // Heart rate: arc spans 40-200 bpm
-        var hr = _hr;
-        drawSubdialValue(dc, Meridian.HR_X, Meridian.HR_Y, (hr != null) ? (hr - 40) / 160.0 : 0.0,
-            C_ROSE, ICON_HEART, metricText(hr), C_IVORY, 0.0);
+        for (var i = 0; i < 3; i++) {
+            var m = _slots[i];
+            var frac = gaugeFraction(m);
+            // Watch battery: amber (and the "LOW" label) at 20% or less of the value shown
+            var low = _battLow && m == Meridian.M_BATTERY;
+            drawSubdialValue(dc, Meridian.SLOT_X[i] as Float, Meridian.SLOT_Y[i] as Float, frac,
+                low ? C_AMBER : METRIC_COLORS[m] as Number, m,
+                valueText(dc, m, _valueFont, VALUE_MAX_W * _k), low ? C_AMBER : C_IVORY,
+                (m == Meridian.M_BATTERY) ? frac : 0.0);
+        }
+    }
 
-        // Body Battery: 0-100
-        var bb = _bb;
-        drawSubdialValue(dc, Meridian.BB_X, Meridian.BB_Y, (bb != null) ? bb / 100.0 : 0.0,
-            C_SKY, ICON_BOLT, metricText(bb), C_IVORY, 0.0);
-
-        // Watch battery: 0-100%, amber (and the "LOW" label) at 20% or less of the value shown
-        var battFrac = _batt / 100.0;
-        drawSubdialValue(dc, Meridian.BAT_X, Meridian.BAT_Y, battFrac, _battLow ? C_AMBER : C_SAGE,
-            ICON_BATT, _batt.toString(), _battLow ? C_AMBER : C_IVORY, battFrac);
+    // Share of the 270° gauge a metric fills
+    private function gaugeFraction(m as Number) as Float {
+        var v = _val[m];
+        if (v == null) {
+            return 0.0;
+        }
+        if (m == Meridian.M_HEART_RATE) {
+            return (v - 40) / 160.0;              // 40-200 bpm
+        }
+        if (m == Meridian.M_STEPS || m == Meridian.M_FLOORS || m == Meridian.M_INTENSITY) {
+            var goal = _goal[m];                  // progress to the user's goal
+            return (goal != null && goal > 0) ? v.toFloat() / goal : 0.0;
+        }
+        if (m == Meridian.M_CALORIES) {
+            return v.toFloat() / CALORIE_SCALE;
+        }
+        if (m == Meridian.M_PULSE_OX) {
+            return (v - 70) / 30.0;               // 70-100%
+        }
+        if (m == Meridian.M_RESPIRATION) {
+            return v / 30.0;                      // 0-30 breaths per minute
+        }
+        return v / 100.0;                         // Body Battery, battery, stress, sleep score
     }
 
     // Live part of a register: gauge value, icon, value text
     private function drawSubdialValue(dc as Dc, dx as Float, dy as Float, frac as Float, color as Number,
-                                      icon as Number, value as String, valueColor as Number,
+                                      metric as Number, value as String, valueColor as Number,
                                       battFrac as Float) as Void {
         var cx = X(dx);
         var cy = Y(dy);
 
         drawGaugeValue(dc, cx, cy, Meridian.SUB_R * _k, pen(GAUGE_PEN), frac, color);
-        drawIcon(dc, icon, cx, cy + ICON_DY * _k, ICON_SIZE * _k, color, true, battFrac);
+        drawIcon(dc, metric, cx, cy + ICON_DY * _k, ICON_SIZE * _k, color, true, battFrac);
 
         dc.setColor(valueColor, Graphics.COLOR_TRANSPARENT);
         drawStr(dc, cx, cy + VALUE_DY * _k, _valueFont, value,
@@ -589,25 +777,31 @@ class MeridianView extends WatchUi.WatchFace {
         // Date, no window
         drawDateText(dc, DATE_Y, _aodFont, C_AOD_LINE);
 
-        // Metrics row: heart · Body Battery · battery %
-        var texts = [metricText(_hr), metricText(_bb), _batt.toString() + "%"];
-        var icons = [ICON_HEART, ICON_BOLT, ICON_BATT];
+        // Metrics row, in the registers' order (left, right, bottom)
         var iconSize = 20 * _k;
-        var iconW = [iconSize, iconSize, iconSize * 26 / 24];   // battery viewBox is 26 wide
         var iconGap = 8 * _k;
         var itemGap = 26 * _k;
+        var texts = new Array<String>[3];
+        var iconW = new Array<Float>[3];
         var textW = new Array<Number>[3];
         var total = itemGap * 2;
         for (var j = 0; j < 3; j++) {
-            textW[j] = dc.getTextWidthInPixels(texts[j], _aodFont);
-            total += iconW[j] + iconGap + textW[j];
+            var m = _slots[j];
+            var pct = (m == Meridian.M_BATTERY || m == Meridian.M_PULSE_OX) && _val[m] != null;
+            texts[j] = valueText(dc, m, _aodFont, AOD_VALUE_MAX_W * _k) + (pct ? "%" : "");
+            // battery viewBox is 26 wide
+            iconW[j] = (m == Meridian.M_BATTERY) ? iconSize * 26 / 24 : iconSize;
+            textW[j] = dc.getTextWidthInPixels(texts[j] as String, _aodFont);
+            total += (iconW[j] as Float) + iconGap + (textW[j] as Number);
         }
         var x = X(Meridian.C) - total / 2;
         var y = Y(AOD_ROW_Y);
         for (var j = 0; j < 3; j++) {
-            drawIcon(dc, icons[j], x + iconW[j] / 2, y, iconSize, C_ASH, false, 0.0);
+            // Low watch battery stands out here too (the main face also says "LOW")
+            var color = (_battLow && _slots[j] == Meridian.M_BATTERY) ? C_AOD_AMBER : C_ASH;
+            drawIcon(dc, _slots[j], x + iconW[j] / 2, y, iconSize, color, false, 0.0);
             x += iconW[j] + iconGap;
-            dc.setColor(C_ASH, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(color, Graphics.COLOR_TRANSPARENT);
             drawStr(dc, x, y, _aodFont, texts[j], Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
             x += textW[j] + itemGap;
         }
@@ -629,12 +823,13 @@ class MeridianView extends WatchUi.WatchFace {
     // =====================================================================
     // Icons
     // =====================================================================
-    // size = rendered px of the 24-unit viewBox height
-    private function drawIcon(dc as Dc, kind as Number, cx as Float, cy as Float, size as Float,
+    // Icon of a metric; size = rendered px of the 24-unit viewBox height.
+    // filled: main face (solid shapes); otherwise always-on (outlines).
+    private function drawIcon(dc as Dc, metric as Number, cx as Float, cy as Float, size as Float,
                               color as Number, filled as Boolean, battFrac as Float) as Void {
         dc.setColor(color, Graphics.COLOR_TRANSPARENT);
         var sc = size / 24.0;
-        if (kind == ICON_BATT) {
+        if (metric == Meridian.M_BATTERY) {
             // viewBox 26x24: body (2,6,19,12) stroke 2, nub (22.5,9.5,2.2,5), level (4.5,8.5,<=14,7)
             var ox = cx - 13 * sc;
             var oy = cy - 12 * sc;
@@ -648,19 +843,36 @@ class MeridianView extends WatchUi.WatchFace {
             dc.setPenWidth(1);
             return;
         }
-        var src = (kind == ICON_HEART) ? HEART : BOLT;
-        var n = src.size() / 2;
-        var pts = new Array<Graphics.Point2D>[n];
-        for (var i = 0; i < n; i++) {
-            pts[i] = [cx + (src[2 * i] - 12) * sc, cy + (src[2 * i + 1] - 12) * sc];
+        // Strokes: 3 units on the main face so line icons match the solid
+        // ones in weight, 2 units in always-on like the outlines
+        var stroke = pen((filled ? 3 : 2) * sc / _k);
+        var ops = ICONS[metric] as Array<Array<Float>>;
+        for (var o = 0; o < ops.size(); o++) {
+            var op = ops[o];
+            var kind = op[0].toNumber();
+            if (kind == 2) {
+                dc.setPenWidth(stroke);
+                dc.drawCircle(cx + (op[1] - 12) * sc, cy + (op[2] - 12) * sc, op[3] * sc);
+                continue;
+            }
+            var n = (op.size() - 1) / 2;
+            var pts = new Array<Graphics.Point2D>[n];
+            for (var i = 0; i < n; i++) {
+                pts[i] = [cx + (op[1 + 2 * i] - 12) * sc, cy + (op[2 + 2 * i] - 12) * sc];
+            }
+            if (kind == 0 && filled) {
+                dc.fillPolygon(pts);
+            } else {
+                dc.setPenWidth(stroke);
+                for (var i = 0; i < n - 1; i++) {
+                    dc.drawLine(pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1]);
+                }
+                if (kind == 0) {    // close the outline
+                    dc.drawLine(pts[n - 1][0], pts[n - 1][1], pts[0][0], pts[0][1]);
+                }
+            }
         }
-        if (filled) {
-            dc.fillPolygon(pts);
-        } else {
-            dc.setPenWidth(pen(2 * sc / _k));
-            outline(dc, pts);
-            dc.setPenWidth(1);
-        }
+        dc.setPenWidth(1);
     }
 
     // =====================================================================
@@ -801,45 +1013,141 @@ class MeridianView extends WatchUi.WatchFace {
     // =====================================================================
     // Data
     // =====================================================================
-    // Live heart rate and battery every frame; history samples, the date and
-    // the Font Scale setting at most once a minute; Body Battery as the
-    // complication pushes it.
+    // Only the metrics on the face are read. Live heart rate, battery and the
+    // ActivityMonitor counters every frame; complication values as they are
+    // pushed; history samples, the date and the Font Scale setting at most
+    // once a minute.
     private function updateData(clock as System.ClockTime) as Void {
         var minute = clock.hour * 60 + clock.min;
         if (minute != _minute) {
             _minute = minute;
-            _hrStale = true;
-            _bbStale = true;
+            _stale = -1;
             refreshDate();
             refreshFontScale();
         }
 
-        var hr = liveHeartRate();
-        if (hr == null) {
-            if (_hrStale) {
-                _hrHistory = historyHeartRate();
-                _hrStale = false;
+        var info = null as ActivityMonitor.Info?;
+        var low = false;
+        for (var i = 0; i < 3; i++) {
+            var m = _slots[i];
+            if (info == null && activityMetric(m)) {
+                info = ActivityMonitor.getInfo();
             }
-            hr = _hrHistory;
-        }
-        _hr = hr;
-
-        var bb = _bbLive;
-        if (bb == null) {
-            if (_bbStale) {
-                _bbHistory = historyBodyBattery();
-                _bbStale = false;
+            var v = readMetric(m, info);
+            _val[m] = v;
+            if (m == Meridian.M_BATTERY && v != null && v <= LOW_BATTERY) {
+                low = true;
             }
-            bb = _bbHistory;
         }
-        _bb = bb;
-
-        _batt = batteryPercent();
-        var low = _batt <= LOW_BATTERY;
         if (low != _battLow) {
             _battLow = low;
             _layerDirty = true;   // the battery label is in the static layer
         }
+    }
+
+    // Counters read from ActivityMonitor.Info
+    private function activityMetric(m as Number) as Boolean {
+        return m == Meridian.M_STEPS || m == Meridian.M_FLOORS || m == Meridian.M_INTENSITY
+            || m == Meridian.M_CALORIES || m == Meridian.M_RESPIRATION;
+    }
+
+    private function readMetric(m as Number, info as ActivityMonitor.Info?) as Number? {
+        if (m == Meridian.M_BATTERY) {
+            return batteryPercent();
+        }
+        if (m == Meridian.M_HEART_RATE) {
+            var hr = liveHeartRate();
+            return (hr != null) ? hr : history(m);
+        }
+        if (info != null) {
+            var a = activityValue(m, info);
+            if (a != null && a >= 0) {
+                return a;
+            }
+        }
+        var live = inRange(m, _live[m]);
+        return (live != null) ? live : history(m);
+    }
+
+    // A complication or history value outside the metric's range (a
+    // "couldn't measure" code such as -1, or a glitch) counts as no reading
+    private function inRange(m as Number, v as Number?) as Number? {
+        if (v == null) {
+            return null;
+        }
+        var lo = (m == Meridian.M_PULSE_OX) ? 50 : 0;
+        var hi = (m == Meridian.M_RESPIRATION) ? 60 : 100;
+        return (v >= lo && v <= hi) ? v : null;
+    }
+
+    // Today's counters (intensity minutes: this week), and the goal each
+    // gauge fills towards
+    private function activityValue(m as Number, info as ActivityMonitor.Info) as Number? {
+        if (m == Meridian.M_STEPS) {
+            _goal[m] = info.stepGoal;
+            return info.steps;
+        }
+        if (m == Meridian.M_FLOORS && (info has :floorsClimbed)) {
+            _goal[m] = info.floorsClimbedGoal;
+            return info.floorsClimbed;
+        }
+        if (m == Meridian.M_INTENSITY && (info has :activeMinutesWeek)) {
+            _goal[m] = info.activeMinutesWeekGoal;
+            var week = info.activeMinutesWeek;
+            return (week != null) ? week.total : null;
+        }
+        if (m == Meridian.M_CALORIES) {
+            return info.calories;
+        }
+        if (m == Meridian.M_RESPIRATION && (info has :respirationRate)) {
+            var r = info.respirationRate;
+            return (r != null && r > 0) ? r.toNumber() : null;
+        }
+        return null;
+    }
+
+    // Latest history sample, re-read at most once a minute
+    private function history(m as Number) as Number? {
+        var bit = 1 << m;
+        if ((_stale & bit) != 0) {
+            _stale &= ~bit;
+            _hist[m] = readHistory(m);
+        }
+        return _hist[m];
+    }
+
+    private function readHistory(m as Number) as Number? {
+        if (m == Meridian.M_HEART_RATE) {
+            return historyHeartRate();
+        }
+        if (!(Toybox has :SensorHistory)) {
+            return null;
+        }
+        var opts = { :period => 1, :order => SensorHistory.ORDER_NEWEST_FIRST };
+        var v = null as Number?;
+        if (m == Meridian.M_BODY_BATTERY && (SensorHistory has :getBodyBatteryHistory)) {
+            v = newestSample(SensorHistory.getBodyBatteryHistory(opts), HISTORY_MAX_AGE);
+        } else if (m == Meridian.M_STRESS && (SensorHistory has :getStressHistory)) {
+            v = newestSample(SensorHistory.getStressHistory(opts), HISTORY_MAX_AGE);
+        } else if (m == Meridian.M_PULSE_OX && (SensorHistory has :getOxygenSaturationHistory)) {
+            v = newestSample(SensorHistory.getOxygenSaturationHistory(opts), PULSE_OX_MAX_AGE);
+        }
+        return inRange(m, v);
+    }
+
+    // The newest sample's value, or null when there is none or it is older
+    // than maxAge seconds (so an old reading never passes for a current one)
+    private function newestSample(it as SensorHistory.SensorHistoryIterator, maxAge as Number) as Number? {
+        var sample = it.next();
+        if (sample == null) {
+            return null;
+        }
+        var when = sample.when;
+        if (when != null && Time.now().value() - when.value() > maxAge) {
+            return null;
+        }
+        var d = sample.data;
+        return (d != null) ? d.toNumber() : null;
     }
 
     private function refreshDate() as Void {
@@ -853,9 +1161,36 @@ class MeridianView extends WatchUi.WatchFace {
         }
     }
 
-    // "--" when there is no reading
-    private function metricText(v as Number?) as String {
-        return (v != null) ? v.toString() : "--";
+    // A value as precise as fits in maxW px: "8432", else "8.4k", else "8k";
+    // 10,000 and up "12.3k", else "12k". "--" when there is no reading.
+    private function valueText(dc as Dc, m as Number, font as Meridian.Font, maxW as Float) as String {
+        var v = _val[m];
+        if (v == null) {
+            return "--";
+        }
+        if (v < 1000) {
+            return v.toString();
+        }
+        var options = (v >= 10000)
+            ? [kText(v, true), kText(v, false)]
+            : [v.toString(), kText(v, true), kText(v, false)];
+        var last = options.size() - 1;
+        for (var i = 0; i < last; i++) {
+            if (dc.getTextWidthInPixels(options[i], font) <= maxW) {
+                return options[i];
+            }
+        }
+        return options[last];
+    }
+
+    // Thousands: "12.3k" (one decimal, truncated; "12,3k" in languages that
+    // write a decimal comma) or "12k"; 100,000 and up always "123k"
+    private function kText(v as Number, decimal as Boolean) as String {
+        if (!decimal || v >= 100000) {
+            return (v / 1000).toString() + "k";
+        }
+        var t = v / 100;
+        return (t / 10).toString() + _decimalSep + (t % 10).toString() + "k";
     }
 
     // Rounded once, so the number shown and the low-battery cues agree
@@ -881,22 +1216,6 @@ class MeridianView extends WatchUi.WatchFace {
             var hr = sample.heartRate;
             if (hr != null && hr != ActivityMonitor.INVALID_HR_SAMPLE && hr > 0) {
                 return hr;
-            }
-        }
-        return null;
-    }
-
-    private function historyBodyBattery() as Number? {
-        if ((Toybox has :SensorHistory) && (SensorHistory has :getBodyBatteryHistory)) {
-            var sample = SensorHistory.getBodyBatteryHistory({
-                :period => 1,
-                :order => SensorHistory.ORDER_NEWEST_FIRST
-            }).next();
-            if (sample != null) {
-                var d = sample.data;
-                if (d != null) {
-                    return d.toNumber();
-                }
             }
         }
         return null;

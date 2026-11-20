@@ -1,6 +1,54 @@
 <settings>
-    <!-- The group description is the only place Garmin Connect shows help
-         text, so it explains press-and-hold and the no-reading placeholder. -->
+    <!-- Group descriptions are the only place Garmin Connect shows help text.
+         The Gauges help explains press-and-hold, the short labels and the
+         no-reading placeholder. -->
+    <group id="gauges" title="@Strings.GaugesTitle" description="@Strings.GaugesHelp">
+        <setting propertyKey="@Properties.GaugeLeft" title="@Strings.GaugeLeftTitle">
+            <settingConfig type="list">
+                <listEntry value="0">@Strings.MetricHeartRate</listEntry>
+                <listEntry value="1">@Strings.MetricBodyBattery</listEntry>
+                <listEntry value="2">@Strings.MetricBattery</listEntry>
+                <listEntry value="3">@Strings.MetricStress</listEntry>
+                <listEntry value="4">@Strings.MetricSteps</listEntry>
+                <listEntry value="5">@Strings.MetricFloors</listEntry>
+                <listEntry value="6">@Strings.MetricIntensity</listEntry>
+                <listEntry value="7">@Strings.MetricCalories</listEntry>
+                <listEntry value="8">@Strings.MetricPulseOx</listEntry>
+                <listEntry value="9">@Strings.MetricRespiration</listEntry>
+                <listEntry value="10">@Strings.MetricSleep</listEntry>
+            </settingConfig>
+        </setting>
+        <setting propertyKey="@Properties.GaugeRight" title="@Strings.GaugeRightTitle">
+            <settingConfig type="list">
+                <listEntry value="0">@Strings.MetricHeartRate</listEntry>
+                <listEntry value="1">@Strings.MetricBodyBattery</listEntry>
+                <listEntry value="2">@Strings.MetricBattery</listEntry>
+                <listEntry value="3">@Strings.MetricStress</listEntry>
+                <listEntry value="4">@Strings.MetricSteps</listEntry>
+                <listEntry value="5">@Strings.MetricFloors</listEntry>
+                <listEntry value="6">@Strings.MetricIntensity</listEntry>
+                <listEntry value="7">@Strings.MetricCalories</listEntry>
+                <listEntry value="8">@Strings.MetricPulseOx</listEntry>
+                <listEntry value="9">@Strings.MetricRespiration</listEntry>
+                <listEntry value="10">@Strings.MetricSleep</listEntry>
+            </settingConfig>
+        </setting>
+        <setting propertyKey="@Properties.GaugeBottom" title="@Strings.GaugeBottomTitle">
+            <settingConfig type="list">
+                <listEntry value="0">@Strings.MetricHeartRate</listEntry>
+                <listEntry value="1">@Strings.MetricBodyBattery</listEntry>
+                <listEntry value="2">@Strings.MetricBattery</listEntry>
+                <listEntry value="3">@Strings.MetricStress</listEntry>
+                <listEntry value="4">@Strings.MetricSteps</listEntry>
+                <listEntry value="5">@Strings.MetricFloors</listEntry>
+                <listEntry value="6">@Strings.MetricIntensity</listEntry>
+                <listEntry value="7">@Strings.MetricCalories</listEntry>
+                <listEntry value="8">@Strings.MetricPulseOx</listEntry>
+                <listEntry value="9">@Strings.MetricRespiration</listEntry>
+                <listEntry value="10">@Strings.MetricSleep</listEntry>
+            </settingConfig>
+        </setting>
+    </group>
     <group id="appearance" title="@Strings.SettingsGroupTitle" description="@Strings.SettingsHelp">
         <setting propertyKey="@Properties.AccentColor" title="@Strings.AccentTitle">
             <settingConfig type="list">

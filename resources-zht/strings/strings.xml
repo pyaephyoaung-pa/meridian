@@ -4,7 +4,7 @@
     <string id="LabelHeartRate">BPM</string>
     <string id="LabelBodyBattery">能量</string>
     <string id="SettingsGroupTitle">外觀</string>
-    <string id="SettingsHelp">長按心率、Body Battery 或電池區塊，可開啟對應的概覽。「能量」即 Body Battery（0–100）。「--」表示尚無讀數。使用象牙色強調色時，秒針保持香檳色。</string>
+    <string id="SettingsHelp">使用象牙色強調色時，秒針保持香檳色。</string>
     <string id="AccentTitle">強調色</string>
     <string id="AccentChampagne">香檳色</string>
     <string id="AccentIvory">象牙色</string>
@@ -13,4 +13,32 @@
     <string id="ShowSecondsTitle">秒針</string>
     <string id="LabelBattery">電池</string>
     <string id="LabelBatteryLow">電量低</string>
+
+    <!-- Gauges (settings) and the new register labels; units stay in English -->
+    <string id="GaugesTitle">儀表</string>
+    <string id="GaugesHelp">選擇每個儀表顯示的內容。長按儀表可開啟該項目的 Garmin 概覽。「能量」即 Body Battery（0–100），KCAL 為卡路里，BRPM 為每分鐘呼吸次數。「強度」為本週的強度活動分鐘數。「--」表示尚無讀數，或手錶不支援該項目。</string>
+    <string id="GaugeLeftTitle">左側儀表（9 點）</string>
+    <string id="GaugeRightTitle">右側儀表（3 點）</string>
+    <string id="GaugeBottomTitle">下方儀表（6 點）</string>
+    <string id="MetricHeartRate">心率</string>
+    <string id="MetricBodyBattery">Body Battery</string>
+    <string id="MetricBattery">手錶電量</string>
+    <string id="MetricStress">壓力</string>
+    <string id="MetricSteps">步數</string>
+    <string id="MetricFloors">爬樓層數</string>
+    <string id="MetricIntensity">強度活動分鐘數（本週）</string>
+    <string id="MetricCalories">卡路里</string>
+    <string id="MetricPulseOx">脈搏血氧</string>
+    <string id="MetricRespiration">呼吸</string>
+    <string id="MetricSleep">睡眠分數</string>
+    <string id="LabelStress">壓力</string>
+    <string id="LabelSteps">步數</string>
+    <string id="LabelFloors">樓層</string>
+    <string id="LabelIntensity">強度</string>
+    <string id="LabelSleep">睡眠</string>
+    <string id="LabelCalories">KCAL</string>
+    <string id="LabelPulseOx">SPO2</string>
+    <string id="LabelRespiration">BRPM</string>
+    <!-- Decimal separator in shortened values ("12.3k" / "12,3k") -->
+    <string id="DecimalSeparator">.</string>
 </strings>

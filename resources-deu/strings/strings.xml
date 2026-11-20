@@ -4,7 +4,7 @@
     <string id="LabelHeartRate">BPM</string>
     <string id="LabelBodyBattery">ENERGIE</string>
     <string id="SettingsGroupTitle">Darstellung</string>
-    <string id="SettingsHelp">Halte eine Anzeige (Herzfrequenz, Body Battery oder Akku) gedrückt, um den passenden Glance zu öffnen. ENERGIE ist deine Body Battery (0–100). -- bedeutet, dass noch kein Messwert vorliegt. Mit dem Akzent Elfenbein bleibt der Sekundenzeiger champagnerfarben.</string>
+    <string id="SettingsHelp">Mit dem Akzent Elfenbein bleibt der Sekundenzeiger champagnerfarben.</string>
     <string id="AccentTitle">Akzentfarbe</string>
     <string id="AccentChampagne">Champagner</string>
     <string id="AccentIvory">Elfenbein</string>
@@ -13,4 +13,32 @@
     <string id="ShowSecondsTitle">Sekundenzeiger</string>
     <string id="LabelBattery">AKKU</string>
     <string id="LabelBatteryLow">NIEDRIG</string>
+
+    <!-- Gauges (settings) and the new register labels; units stay in English -->
+    <string id="GaugesTitle">Anzeigen</string>
+    <string id="GaugesHelp">Wähle, was jede Anzeige zeigt. Halte eine Anzeige gedrückt, um den Garmin-Glance dieses Werts zu öffnen. ENERGIE ist deine Body Battery (0–100), KCAL deine Kalorien und BRPM deine Atemzüge pro Minute. INTENSITÄT zählt die Intensitätsminuten dieser Woche. -- bedeutet, dass noch kein Messwert vorliegt oder deine Uhr diesen Wert nicht anbietet.</string>
+    <string id="GaugeLeftTitle">Linke Anzeige (9 Uhr)</string>
+    <string id="GaugeRightTitle">Rechte Anzeige (3 Uhr)</string>
+    <string id="GaugeBottomTitle">Untere Anzeige (6 Uhr)</string>
+    <string id="MetricHeartRate">Herzfrequenz</string>
+    <string id="MetricBodyBattery">Body Battery</string>
+    <string id="MetricBattery">Uhrakku</string>
+    <string id="MetricStress">Stress</string>
+    <string id="MetricSteps">Schritte</string>
+    <string id="MetricFloors">Etagen hinauf</string>
+    <string id="MetricIntensity">Intensitätsminuten (diese Woche)</string>
+    <string id="MetricCalories">Kalorien</string>
+    <string id="MetricPulseOx">Pulsoximeter</string>
+    <string id="MetricRespiration">Atmung</string>
+    <string id="MetricSleep">Schlafindex</string>
+    <string id="LabelStress">STRESS</string>
+    <string id="LabelSteps">SCHRITTE</string>
+    <string id="LabelFloors">ETAGEN</string>
+    <string id="LabelIntensity">INTENSITÄT</string>
+    <string id="LabelSleep">SCHLAF</string>
+    <string id="LabelCalories">KCAL</string>
+    <string id="LabelPulseOx">SPO2</string>
+    <string id="LabelRespiration">BRPM</string>
+    <!-- Decimal separator in shortened values ("12.3k" / "12,3k") -->
+    <string id="DecimalSeparator">,</string>
 </strings>
