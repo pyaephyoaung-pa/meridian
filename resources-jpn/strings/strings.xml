@@ -4,7 +4,7 @@
     <string id="LabelHeartRate">BPM</string>
     <string id="LabelBodyBattery">体力</string>
     <string id="SettingsGroupTitle">表示</string>
-    <string id="SettingsHelp">心拍数・Body Battery・バッテリーの各表示を長押しすると、対応するグランスが開きます。「体力」はBody Battery（0〜100）です。「--」はまだ測定値がないことを示します。アイボリーのアクセントでは、秒針はシャンパンのままです。</string>
+    <string id="SettingsHelp">アイボリーのアクセントでは、秒針はシャンパンのままです。</string>
     <string id="AccentTitle">アクセントカラー</string>
     <string id="AccentChampagne">シャンパン</string>
     <string id="AccentIvory">アイボリー</string>
@@ -13,4 +13,32 @@
     <string id="ShowSecondsTitle">秒針</string>
     <string id="LabelBattery">電池</string>
     <string id="LabelBatteryLow">残量低下</string>
+
+    <!-- Gauges (settings) and the new register labels; units stay in English -->
+    <string id="GaugesTitle">ゲージ</string>
+    <string id="GaugesHelp">各ゲージに表示する項目を選びます。ゲージを長押しすると、その項目のGarminグランスが開きます。「体力」はBody Battery（0〜100）、KCALは消費カロリー、BRPMは1分あたりの呼吸数です。「強度」は今週の運動強度の分数です。「--」はまだ測定値がないか、ウォッチがその項目に対応していないことを示します。</string>
+    <string id="GaugeLeftTitle">左ゲージ（9時）</string>
+    <string id="GaugeRightTitle">右ゲージ（3時）</string>
+    <string id="GaugeBottomTitle">下ゲージ（6時）</string>
+    <string id="MetricHeartRate">心拍数</string>
+    <string id="MetricBodyBattery">Body Battery</string>
+    <string id="MetricBattery">ウォッチのバッテリー</string>
+    <string id="MetricStress">ストレス</string>
+    <string id="MetricSteps">歩数</string>
+    <string id="MetricFloors">上昇階数</string>
+    <string id="MetricIntensity">運動強度（今週の分数）</string>
+    <string id="MetricCalories">カロリー</string>
+    <string id="MetricPulseOx">パルスオキシメーター</string>
+    <string id="MetricRespiration">呼吸数</string>
+    <string id="MetricSleep">睡眠スコア</string>
+    <string id="LabelStress">ストレス</string>
+    <string id="LabelSteps">歩数</string>
+    <string id="LabelFloors">階数</string>
+    <string id="LabelIntensity">強度</string>
+    <string id="LabelSleep">睡眠</string>
+    <string id="LabelCalories">KCAL</string>
+    <string id="LabelPulseOx">SPO2</string>
+    <string id="LabelRespiration">BRPM</string>
+    <!-- Decimal separator in shortened values ("12.3k" / "12,3k") -->
+    <string id="DecimalSeparator">.</string>
 </strings>

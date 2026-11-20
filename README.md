@@ -1,32 +1,48 @@
 # Meridian
 
-A three-register analog watch face for the Garmin Venu 4 (41mm / 45mm), written in Monkey C for Connect IQ.
+A three-register analog watch face for the Garmin Venu 4 (41mm / 45mm) and D2 Air X15 (which shares the 45mm build), written in Monkey C for Connect IQ.
 
 ## Face
 
-| Position | Shows | Gauge | Color |
+The date window ("THU 19", accent color) sits at 12. The three registers at 9, 3 and 6 o'clock each show a metric chosen in settings (see [Settings](#settings)); by default heart rate, Body Battery and watch battery. `--` means no reading yet, or a metric the watch doesn't offer.
+
+| Metric | Label | Gauge | Color |
 |---|---|---|---|
-| 12 o'clock | Date window ("THU 19") | — | Accent |
-| 9 o'clock | Heart rate, bpm (`--` with no reading) | 40–200 bpm | Rose |
-| 3 o'clock | Body Battery, labelled "ENERGY" | 0–100 | Sky |
-| 6 o'clock | Watch battery % | 0–100% | Sage; at 20% or less amber, with the label switching to "LOW" |
+| Heart rate | BPM | 40–200 bpm | Rose |
+| Body Battery | ENERGY | 0–100 | Sky |
+| Watch battery | BATTERY | 0–100%; at 20% or less amber, with the label switching to "LOW" | Sage |
+| Stress | STRESS | 0–100 | Lavender |
+| Steps | STEPS | progress to the step goal | Teal |
+| Floors climbed | FLOORS | progress to the floors goal | Khaki |
+| Intensity minutes (this week; the setting and help text say so) | INTENSITY | progress to the weekly goal | Gold |
+| Calories | KCAL | 0–3,000 kcal (there is no calorie-goal API) | Orange |
+| Pulse Ox | SPO2 | 70–100% | Pink |
+| Respiration | BRPM | 0–30 breaths per minute | Aqua |
+| Sleep score | SLEEP | 0–100 | Indigo |
+
+Values are shown as precisely as fits the register at the current text size: "8432", or "8.4k" at the largest text sizes; 10,000 and up as "12.3k", or "12k" when that doesn't fit. The decimal separator follows the watch language ("12,3k" in German, French, Spanish, Italian, Portuguese and Dutch). A label wider than the register (long translations such as "INTENSIDADE") first loses its letter-spacing, then drops to a smaller font.
 
 - Faceted near-white sword hands (hour 22 px, minute 16 px wide in the 454 px design), 3 px accent seconds hand with counterweight ring
 - Minute track with bright 5-minute marks, 7 px ivory hour indices, double accent bar at 12
 - Each register is a 270° gauge opening at the bottom, with icon, value and label
-- Press and hold a register to open the matching Garmin glance (heart rate, Body Battery, battery). Connect IQ watch faces receive touch-and-hold only, not plain taps.
+- Press and hold a register to open the Garmin glance for the metric it shows. Connect IQ watch faces receive touch-and-hold only, not plain taps.
 - Black ground, so most AMOLED pixels stay off
 
-**Always-on mode:** outlined hands, hour dots, the date and a dim row of heart rate, Body Battery and battery %. No seconds hand. Every minute the whole layout jumps to the next of 25 positions on a 5×5 grid (±10 px), moving at least 10 px on each axis in a changing direction, so wear is spread out and no position repeats within 25 minutes. The face checks the system display mode as well as the sleep callbacks, so it never draws the full face in always-on, and it draws nothing while the display is off.
+**Always-on mode:** outlined hands, hour dots, the date and a dim row of the three registers' metrics, in register order (battery and Pulse Ox with %; a battery at 20% or less is drawn in dim amber). No seconds hand. Every minute the whole layout jumps to the next of 25 positions on a 5×5 grid (±10 px), moving at least 10 px on each axis in a changing direction, so wear is spread out and no position repeats within 25 minutes. The face checks the system display mode as well as the sleep callbacks, so it never draws the full face in always-on, and it draws nothing while the display is off.
 
 ## Settings
 
-Edit in Garmin Connect (or in the simulator: File → Edit Persistent Storage → Edit Application.Properties data). Both settings sit in an "Appearance" group whose description explains press-and-hold and what `--` means, since Garmin Connect has no other place for help text.
+Edit in the Connect IQ app or Garmin Connect (or in the simulator: File → Edit Persistent Storage → Edit Application.Properties data). Settings only reach the watch when the face is installed from the Connect IQ Store; a sideloaded copy keeps the defaults. The "Gauges" group's description explains press-and-hold, the short labels and what `--` means, since Garmin Connect has no other place for help text.
 
-| Setting | Options | Default |
-|---|---|---|
-| Accent color | Champagne, Ivory, Sky, Rose | Champagne |
-| Seconds hand | On / Off | On |
+| Group | Setting | Options | Default |
+|---|---|---|---|
+| Gauges | Left gauge (9 o'clock) | Any metric in the table above | Heart rate |
+| Gauges | Right gauge (3 o'clock) | Any metric | Body Battery |
+| Gauges | Bottom gauge (6 o'clock) | Any metric | Watch battery |
+| Appearance | Accent color | Champagne, Ivory, Sky, Rose | Champagne |
+| Appearance | Seconds hand | On / Off | On |
+
+The same metric can sit in more than one register. Which metrics a watch offers depends on its sensors and firmware; one it doesn't offer shows `--`, and press-and-hold does nothing there. The setting values are the `Meridian.M_*` constants in `MeridianView.mc`, so new metrics must be added at the end of the list.
 
 The accent color is used for the 12 o'clock bar, date number, seconds hand and center cap. With Ivory, the seconds hand and center cap stay champagne so they don't blend into the ivory hour and minute hands.
 
@@ -36,9 +52,9 @@ Audited against WCAG 2.1 AA, adapted for a watch face.
 
 - **Text size:** all text follows the watch's Font Scale setting (Settings → Display; 0.8–1.4× on Venu 4). Register labels scale up to 1.15× so they still fit between the registers and the hour indices. At the default size, values are about 2 mm tall and labels about 1.3 mm on the 45mm.
 - **Contrast:** text is at least 6:1 on black. Graphics needed to read the face are at least 3:1: minute ticks are `#8A8478` (5.7:1; the 3:1 minimum was near-invisible on a real Venu 4), and each gauge's dim track ends in a 7.7:1 tick that marks the top of the scale. The register hairlines and date-window border are decorative.
-- **Not color alone:** at 20% or less the battery label reads "LOW" as well as turning amber.
+- **Not color alone:** at 20% or less the battery label reads "LOW" as well as turning amber. In always-on mode the battery's icon and percentage turn dim amber; the percentage itself is the text cue there.
 - **Hands over values:** the hour and minute hands sit on a 2 px black halo, so digits underneath stay distinct from the hand.
-- **Language:** labels and settings are translated into German, French, Spanish, Italian, Portuguese, Dutch, Japanese, Korean and Simplified/Traditional Chinese (`resources-<lang>/strings`). "BPM" stays in English. The Body Battery register is labelled "ENERGY" (Japanese "体力"), which fits under the register and says what the 0–100 score measures; the settings help text ties it to Body Battery. These translations have not been reviewed by native speakers yet. Chinese, Japanese and Korean text uses the watch's own CJK vector fonts at the same size as the Latin labels; Thai, Arabic and Hebrew use the system font for the watch's language, which keeps letter shaping and right-to-left order.
+- **Language:** labels and settings are translated into German, French, Spanish, Italian, Portuguese, Dutch, Japanese, Korean and Simplified/Traditional Chinese (`resources-<lang>/strings`). The unit labels BPM, KCAL, SPO2 and BRPM stay in English. The Body Battery register is labelled "ENERGY" (Japanese "体力"), which fits under the register and says what the 0–100 score measures; the settings help text ties it to Body Battery. These translations have not been reviewed by native speakers yet. Chinese, Japanese and Korean text uses the watch's own CJK vector fonts at the same size as the Latin labels; Thai, Arabic and Hebrew use the system font for the watch's language, which keeps letter shaping and right-to-left order.
 - **Motion:** no flashing; the seconds hand can be turned off.
 - **Not possible on the platform:** Connect IQ watch faces have no accessibility tree and Garmin watches have no screen reader, so values can't be announced.
 
@@ -46,21 +62,32 @@ Audited against WCAG 2.1 AA, adapted for a watch face.
 
 Copy for the Connect IQ Store listing, which covers what the face itself can't explain:
 
-> Meridian is a three-register analog face: heart rate at 9, Body Battery at 3, watch battery at 6 and the date at 12.
+> Meridian is a three-register analog face with the date at 12. Choose what each register shows: heart rate, Body Battery, watch battery, stress, steps, floors, intensity minutes, calories, Pulse Ox, respiration or sleep score. By default they show heart rate, Body Battery and watch battery.
 >
-> Press and hold a register to open its glance (heart rate, Body Battery or battery). "--" means there's no reading yet, for example right after you put the watch on. "ENERGY" is your Garmin Body Battery, an energy score from 0–100. When the watch battery is at 20% or less, its register turns amber and reads "LOW".
+> Press and hold a register to open that metric's Garmin glance. "--" means there's no reading yet, or your watch doesn't offer that metric. "ENERGY" is your Garmin Body Battery, an energy score from 0–100. When the watch battery is at 20% or less, its register turns amber and reads "LOW".
 >
-> Text follows your watch's Font Scale setting. In always-on mode the face shows outlined hands, the date and a dim row of heart rate, Body Battery and battery, and shifts slightly each minute to protect the display.
+> Works on Venu 4 (41 mm and 45 mm) and D2 Air X15.
+>
+> Text follows your watch's Font Scale setting. In always-on mode the face shows outlined hands, the date and a dim row of your three metrics, and shifts slightly each minute to protect the display.
 
 ## Data sources
 
 | Value | API |
 |---|---|
+Only the metrics on the face are read or subscribed to. Complication and history values outside a metric's range (0–100; Pulse Ox 50–100; respiration up to 60) count as no reading, so a "couldn't measure" code never shows as a number.
+
+| Value | API |
+|---|---|
 | Heart rate | `Activity.getActivityInfo().currentHeartRate`, falling back to the latest `ActivityMonitor` heart-rate sample (read at most once a minute) |
-| Body Battery | Body Battery complication via `Complications.subscribeToUpdates`, falling back to `SensorHistory.getBodyBatteryHistory()` (read at most once a minute) |
+| Body Battery, stress, Pulse Ox | Their complications via `Complications.subscribeToUpdates`, falling back to `SensorHistory` (Body Battery, stress, oxygen saturation history; read at most once a minute). A history sample older than 2 hours (Pulse Ox: 24 hours, as it is mostly measured overnight) shows `--` instead |
+| Respiration | `ActivityMonitor.getInfo().respirationRate`, falling back to the respiration complication |
+| Sleep score | Sleep score complication only |
+| Steps, floors, intensity minutes, calories | `ActivityMonitor.getInfo()` (with `stepGoal`, `floorsClimbedGoal`, `activeMinutesWeekGoal` for the gauges) |
 | Watch battery | `System.getSystemStats().battery`, rounded once so the number shown and the amber threshold agree |
 
-Permissions: `ComplicationSubscriber` (Body Battery value and press-to-open) and `SensorHistory` (Body Battery fallback).
+Press-and-hold opens each metric's complication with `Complications.exitTo`.
+
+Permissions: `ComplicationSubscriber` (complication values and press-to-open) and `SensorHistory` (history fallbacks).
 
 ## Project layout
 
@@ -72,7 +99,7 @@ source/
   MeridianView.mc                drawing: dial, registers, hands, always-on
   MeridianDelegate.mc            press and hold a register -> open the Garmin glance
 resources/
-  settings/                      accent color + seconds hand settings, help text
+  settings/                      register metrics, accent color, seconds hand; help text
   strings/strings.xml            English strings (labels, settings)
   drawables/launcher_icon.png    70×70 base icon
 resources-<lang>/strings/        translations (deu fre spa ita por dut jpn kor zhs zht)

@@ -4,7 +4,7 @@
     <string id="LabelHeartRate">BPM</string>
     <string id="LabelBodyBattery">能量</string>
     <string id="SettingsGroupTitle">外观</string>
-    <string id="SettingsHelp">长按心率、Body Battery 或电池表盘区域，可打开对应的概览。“能量”即 Body Battery（0–100）。“--”表示暂无读数。使用象牙色强调色时，秒针保持香槟色。</string>
+    <string id="SettingsHelp">使用象牙色强调色时，秒针保持香槟色。</string>
     <string id="AccentTitle">强调色</string>
     <string id="AccentChampagne">香槟色</string>
     <string id="AccentIvory">象牙色</string>
@@ -13,4 +13,32 @@
     <string id="ShowSecondsTitle">秒针</string>
     <string id="LabelBattery">电池</string>
     <string id="LabelBatteryLow">电量低</string>
+
+    <!-- Gauges (settings) and the new register labels; units stay in English -->
+    <string id="GaugesTitle">仪表</string>
+    <string id="GaugesHelp">选择每个仪表显示的内容。长按仪表可打开该项目的 Garmin 概览。“能量”即 Body Battery（0–100），KCAL 为卡路里，BRPM 为每分钟呼吸次数。“强度”为本周的强度活动分钟数。“--”表示暂无读数，或手表不支持该项目。</string>
+    <string id="GaugeLeftTitle">左侧仪表（9 点）</string>
+    <string id="GaugeRightTitle">右侧仪表（3 点）</string>
+    <string id="GaugeBottomTitle">下方仪表（6 点）</string>
+    <string id="MetricHeartRate">心率</string>
+    <string id="MetricBodyBattery">Body Battery</string>
+    <string id="MetricBattery">手表电量</string>
+    <string id="MetricStress">压力</string>
+    <string id="MetricSteps">步数</string>
+    <string id="MetricFloors">爬楼层数</string>
+    <string id="MetricIntensity">强度活动分钟数（本周）</string>
+    <string id="MetricCalories">卡路里</string>
+    <string id="MetricPulseOx">脉搏血氧</string>
+    <string id="MetricRespiration">呼吸</string>
+    <string id="MetricSleep">睡眠分数</string>
+    <string id="LabelStress">压力</string>
+    <string id="LabelSteps">步数</string>
+    <string id="LabelFloors">楼层</string>
+    <string id="LabelIntensity">强度</string>
+    <string id="LabelSleep">睡眠</string>
+    <string id="LabelCalories">KCAL</string>
+    <string id="LabelPulseOx">SPO2</string>
+    <string id="LabelRespiration">BRPM</string>
+    <!-- Decimal separator in shortened values ("12.3k" / "12,3k") -->
+    <string id="DecimalSeparator">.</string>
 </strings>
