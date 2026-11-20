@@ -33,16 +33,18 @@ class MeridianView extends WatchUi.WatchFace {
     // ---- Palette (see design "States & tokens") ----
     // Contrast on black: text >= 6:1; graphics needed to read the face >= 3:1.
     private const C_BLACK     = 0x000000;  // ground, pixels off
-    private const C_IVORY     = 0xEDE6D6;  // hands, indices, values
-    private const C_BONE      = 0xB5AD9C;  // hand facets
+    private const C_IVORY     = 0xEDE6D6;  // indices, values
+    private const C_HAND      = 0xFFF8EC;  // hour + minute hands, brighter than the indices
+    private const C_FACET     = 0xD9CFBC;  // hand facets, light so the whole hand reads bright
     private const C_GRAPHITE  = 0x2B2925;  // gauge tracks (decorative; the scale ends are marked)
     private const C_ASH       = 0x8F897D;  // labels
     private const C_ROSE      = 0xE8735E;  // heart rate
     private const C_SKY       = 0x6DB5E3;  // Body Battery
     private const C_SAGE      = 0xA8CF96;  // watch battery
     private const C_AMBER     = 0xF29A45;  // battery at 20% or less
-    private const C_TICK_MIN  = 0x5D5950;  // minute ticks (3:1)
-    private const C_TICK_5    = 0xA39C8E;  // 5-minute ticks, gauge end-of-scale tick
+    private const C_TICK_MIN  = 0x8A8478;  // minute ticks (5.7:1; 3:1 was near-invisible on device)
+    private const C_TICK_5    = 0xA39C8E;  // gauge end-of-scale tick
+    private const C_TICK_HOUR = 0xD6CEBD;  // 5-minute marks on the minute track
     private const C_SUB_RING  = 0x1C1B18;  // subdial inner hairline (decorative)
     private const C_DATE_EDGE = 0x3A3731;  // date window border (decorative)
     private const C_CHAMPAGNE = 0xD4B37A;
@@ -63,9 +65,11 @@ class MeridianView extends WatchUi.WatchFace {
     ];
     private const BOLT = [13.5, 2.0, 5.0, 13.5, 11.2, 13.5, 10.0, 22.0, 18.5, 10.5, 12.3, 10.5];
 
-    // Hands, design space: [tip, right shoulder, tail, left shoulder]
-    private const HOUR_HAND   = [227.0, 120.0, 234.0, 212.0, 227.0, 240.0, 220.0, 212.0];
-    private const MINUTE_HAND = [227.0,  44.0, 232.0, 212.0, 227.0, 242.0, 222.0, 212.0];
+    // Sword hands, design space, clockwise from the tip:
+    // [tip, right shoulder, right base, tail, left base, left shoulder].
+    // Hour 22 px wide reaching r130; minute 16 px wide reaching the minute track.
+    private const HOUR_HAND   = [227.0,  97.0, 238.0, 134.0, 234.5, 212.0, 227.0, 249.0, 219.5, 212.0, 216.0, 134.0];
+    private const MINUTE_HAND = [227.0,  23.0, 235.0,  66.0, 233.0, 212.0, 227.0, 251.0, 221.0, 212.0, 219.0,  66.0];
 
     private const ICON_HEART = 0;
     private const ICON_BOLT  = 1;
@@ -371,20 +375,22 @@ class MeridianView extends WatchUi.WatchFace {
     private function drawDial(dc as Dc) as Void {
         for (var i = 0; i < 60; i++) {
             var five = (i % 5 == 0);
-            dc.setColor(five ? C_TICK_5 : C_TICK_MIN, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(five ? C_TICK_HOUR : C_TICK_MIN, Graphics.COLOR_TRANSPARENT);
             dc.setPenWidth(pen(five ? 3.0 : 1.4));
             radialLine(dc, i * 6.0, 211.0, 219.0);
         }
 
         // 12 o'clock: two accent bars
         dc.setColor(_accent, Graphics.COLOR_TRANSPARENT);
-        fillDesignRect(dc, 219.5, 20.0, 5.0, 32.0, 0.0);
-        fillDesignRect(dc, 229.5, 20.0, 5.0, 32.0, 0.0);
+        fillDesignRect(dc, 217.5, 20.0, 6.0, 32.0, 0.0);
+        fillDesignRect(dc, 230.5, 20.0, 6.0, 32.0, 0.0);
 
-        // 1..11 o'clock: ivory indices
+        // 1..11 o'clock: ivory indices, 7 px wide. They can't grow in length:
+        // inward they'd touch the label under the 6 o'clock register, outward
+        // the minute track.
         dc.setColor(C_IVORY, Graphics.COLOR_TRANSPARENT);
         for (var h = 1; h < 12; h++) {
-            fillDesignRect(dc, 224.5, 20.0, 5.0, 30.0, h * 30.0);
+            fillDesignRect(dc, 223.5, 20.0, 7.0, 30.0, h * 30.0);
         }
         dc.setPenWidth(1);
     }
@@ -521,26 +527,26 @@ class MeridianView extends WatchUi.WatchFace {
 
         if (_showSeconds) {
             var secDeg = s * 6.0;
-            var tail = rot(Meridian.C, 270.0, secDeg);
-            var tip = rot(Meridian.C, 32.0, secDeg);
-            var ring = rot(Meridian.C, 256.0, secDeg);
+            var tail = rot(Meridian.C, 275.0, secDeg);
+            var tip = rot(Meridian.C, 27.0, secDeg);
+            var ring = rot(Meridian.C, 258.0, secDeg);
             dc.setColor(_handAccent, Graphics.COLOR_TRANSPARENT);
-            dc.setPenWidth(pen(1.6));
+            dc.setPenWidth(pen(3.0));
             dc.drawLine(tail[0], tail[1], tip[0], tip[1]);
             dc.setColor(C_BLACK, Graphics.COLOR_TRANSPARENT);
-            dc.fillCircle(ring[0], ring[1], 5 * _k);
+            dc.fillCircle(ring[0], ring[1], 7 * _k);
             dc.setColor(_handAccent, Graphics.COLOR_TRANSPARENT);
-            dc.drawCircle(ring[0], ring[1], 5 * _k);
+            dc.drawCircle(ring[0], ring[1], 7 * _k);
         }
 
         dc.setColor(_handAccent, Graphics.COLOR_TRANSPARENT);
-        dc.fillCircle(X(Meridian.C), Y(Meridian.C), 6.5 * _k);
+        dc.fillCircle(X(Meridian.C), Y(Meridian.C), 9 * _k);
         dc.setColor(C_BLACK, Graphics.COLOR_TRANSPARENT);
-        dc.fillCircle(X(Meridian.C), Y(Meridian.C), 2.2 * _k);
+        dc.fillCircle(X(Meridian.C), Y(Meridian.C), 3 * _k);
         dc.setPenWidth(1);
     }
 
-    // Ivory diamond, bone facet on the left half, on a black halo. The halo is
+    // Near-white sword, light facet on the left half, on a black halo. The halo is
     // the design's black keyline drawn under the fill instead of over it (over
     // the fill it aliased into a sawtooth on device); only its outer half
     // shows, and it keeps register digits under a hand from merging into it.
@@ -550,10 +556,10 @@ class MeridianView extends WatchUi.WatchFace {
         dc.setPenWidth(pen(HALO * 2));
         outline(dc, pts);
         dc.setPenWidth(1);
-        dc.setColor(C_IVORY, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(C_HAND, Graphics.COLOR_TRANSPARENT);
         dc.fillPolygon(pts);
-        dc.setColor(C_BONE, Graphics.COLOR_TRANSPARENT);
-        dc.fillPolygon([pts[0], pts[3], pts[2]]);
+        dc.setColor(C_FACET, Graphics.COLOR_TRANSPARENT);
+        dc.fillPolygon([pts[0], pts[5], pts[4], pts[3]]);   // tip, left shoulder, left base, tail
     }
 
     // =====================================================================
@@ -693,13 +699,14 @@ class MeridianView extends WatchUi.WatchFace {
         dc.fillPolygon([rot(x, y, deg), rot(x + w, y, deg), rot(x + w, y + h, deg), rot(x, y + h, deg)]);
     }
 
+    // Hand outline in screen px; shape is flat [x0, y0, x1, y1, ...] design px
     private function handPoints(shape as Array<Float>, deg as Float) as Array<Graphics.Point2D> {
-        return [
-            rot(shape[0], shape[1], deg),
-            rot(shape[2], shape[3], deg),
-            rot(shape[4], shape[5], deg),
-            rot(shape[6], shape[7], deg)
-        ];
+        var n = shape.size() / 2;
+        var pts = new Array<Graphics.Point2D>[n];
+        for (var i = 0; i < n; i++) {
+            pts[i] = rot(shape[2 * i], shape[2 * i + 1], deg);
+        }
+        return pts;
     }
 
     private function outline(dc as Dc, pts as Array<Graphics.Point2D>) as Void {
