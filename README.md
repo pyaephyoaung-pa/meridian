@@ -11,8 +11,8 @@ A three-register analog watch face for the Garmin Venu 4 (41mm / 45mm), written 
 | 3 o'clock | Body Battery, labelled "ENERGY" | 0–100 | Sky |
 | 6 o'clock | Watch battery % | 0–100% | Sage; at 20% or less amber, with the label switching to "LOW" |
 
-- Faceted ivory hour and minute hands, accent seconds hand with counterweight ring
-- Minute track, 5-minute marks, ivory hour indices, double accent bar at 12
+- Faceted near-white sword hands (hour 22 px, minute 16 px wide in the 454 px design), 3 px accent seconds hand with counterweight ring
+- Minute track with bright 5-minute marks, 7 px ivory hour indices, double accent bar at 12
 - Each register is a 270° gauge opening at the bottom, with icon, value and label
 - Press and hold a register to open the matching Garmin glance (heart rate, Body Battery, battery). Connect IQ watch faces receive touch-and-hold only, not plain taps.
 - Black ground, so most AMOLED pixels stay off
@@ -35,7 +35,7 @@ The accent color is used for the 12 o'clock bar, date number, seconds hand and c
 Audited against WCAG 2.1 AA, adapted for a watch face.
 
 - **Text size:** all text follows the watch's Font Scale setting (Settings → Display; 0.8–1.4× on Venu 4). Register labels scale up to 1.15× so they still fit between the registers and the hour indices. At the default size, values are about 2 mm tall and labels about 1.3 mm on the 45mm.
-- **Contrast:** text is at least 6:1 on black. Graphics needed to read the face are at least 3:1: minute ticks are `#5D5950`, and each gauge's dim track ends in a 7.7:1 tick that marks the top of the scale. The register hairlines and date-window border are decorative.
+- **Contrast:** text is at least 6:1 on black. Graphics needed to read the face are at least 3:1: minute ticks are `#8A8478` (5.7:1; the 3:1 minimum was near-invisible on a real Venu 4), and each gauge's dim track ends in a 7.7:1 tick that marks the top of the scale. The register hairlines and date-window border are decorative.
 - **Not color alone:** at 20% or less the battery label reads "LOW" as well as turning amber.
 - **Hands over values:** the hour and minute hands sit on a 2 px black halo, so digits underneath stay distinct from the hand.
 - **Language:** labels and settings are translated into German, French, Spanish, Italian, Portuguese, Dutch, Japanese, Korean and Simplified/Traditional Chinese (`resources-<lang>/strings`). "BPM" stays in English. The Body Battery register is labelled "ENERGY" (Japanese "体力"), which fits under the register and says what the 0–100 score measures; the settings help text ties it to Body Battery. These translations have not been reviewed by native speakers yet. Chinese, Japanese and Korean text uses the watch's own CJK vector fonts at the same size as the Latin labels; Thai, Arabic and Hebrew use the system font for the watch's language, which keeps letter shaping and right-to-left order.
