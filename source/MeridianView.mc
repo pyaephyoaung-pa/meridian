@@ -57,7 +57,9 @@ module Meridian {
         Complications.COMPLICATION_TYPE_CALORIES,
         Complications.COMPLICATION_TYPE_PULSE_OX,
         Complications.COMPLICATION_TYPE_RESPIRATION_RATE,
-        Complications.COMPLICATION_TYPE_SLEEP_SCORE
+        // COMPLICATION_TYPE_SLEEP_SCORE (API 6.0.2) by value, so watches on
+        // older firmware still build; there it isn't offered and shows "--"
+        42 as Complications.Type
     ];
 
     // Metric shown in a slot, from settings; an unknown value falls back to
@@ -930,10 +932,12 @@ class MeridianView extends WatchUi.WatchFace {
         }
     }
 
-    // Vector fonts go through drawAngledText (angle 0), bitmap fonts through drawText
+    // Vector fonts go through drawAngledText (angle 0), bitmap fonts through drawText.
+    // Watches without vector fonts (Venu 2, vivoactive 5...) have no VectorFont
+    // class at all, so check it exists before testing against it.
     private function drawStr(dc as Dc, x as Numeric, y as Numeric, font as Meridian.Font,
                              text as String, just as Number) as Void {
-        if (font instanceof Graphics.VectorFont) {
+        if ((Graphics has :VectorFont) && font instanceof Graphics.VectorFont) {
             dc.drawAngledText(x, y, font, text, just, 0);
         } else {
             dc.drawText(x, y, font, text, just);

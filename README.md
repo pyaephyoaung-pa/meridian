@@ -1,6 +1,6 @@
 # Meridian
 
-A three-register analog watch face for the Garmin Venu 4 (41mm / 45mm) and D2 Air X15 (which shares the 45mm build), written in Monkey C for Connect IQ.
+A three-register analog watch face for round-screen AMOLED Garmin watches (Venu, vivoactive, Forerunner, fēnix, epix, MARQ and more; see [Supported watches](#supported-watches)), written in Monkey C for Connect IQ.
 
 ## Face
 
@@ -29,6 +29,28 @@ Values are shown as precisely as fits the register at the current text size: "84
 - Black ground, so most AMOLED pixels stay off
 
 **Always-on mode:** outlined hands, hour dots, the date and a dim row of the three registers' metrics, in register order (battery and Pulse Ox with %; a battery at 20% or less is drawn in dim amber). No seconds hand. Every minute the whole layout jumps to the next of 25 positions on a 5×5 grid (±10 px), moving at least 10 px on each axis in a changing direction, so wear is spread out and no position repeats within 25 minutes. The face checks the system display mode as well as the sleep callbacks, so it never draws the full face in always-on, and it draws nothing while the display is off.
+
+## Supported watches
+
+Every **round AMOLED** watch on Connect IQ 5.0 or newer: 50 device profiles (64 hardware variants), from 360 px (Venu 2S, Forerunner 265S) to 466 px (fēnix 9 Pro 51mm). The layout is drawn in a 454 px design space and scaled to the screen, so every size gets the same layout.
+
+| Family | Models |
+|---|---|
+| Venu | 2, 2 Plus, 2S, 3, 3S, 4 41mm, 4 45mm / D2 Air X15 |
+| vívoactive | 5, 6 |
+| Forerunner | 70, 165, 165 Music, 170, 170 Music, 265, 265S, 570 42mm/47mm, 965, 970 |
+| fēnix | 8 43mm, 8 47mm/51mm (and tactix 8, quatix 8), 8 Pro, 9 43mm, 9 47mm/51mm, 9 Pro 43mm/47mm/51mm, E |
+| epix | Gen 2 (and quatix 7 Sapphire), Pro 42mm, Pro 47mm (and quatix 7 Pro), Pro 51mm (and D2 Mach 1 Pro, tactix 7 AMOLED) |
+| MARQ | Gen 2, Gen 2 Aviator, Gen 3 |
+| Others | Approach S50, S70 42mm/47mm, S72 43mm/47mm; Descent G2, Mk3 43mm, Mk3i 51mm; D2 Air X10, Mach 1, Mach 2, Mach 2 Pro; Instinct 3 AMOLED 45mm/50mm |
+
+**Fonts differ by watch.** The face asks for Roboto and Roboto Condensed by name. Watches that lack them use their own system fonts instead:
+- No Roboto at all (Venu 2/2 Plus/2S, vívoactive 5, D2 Air X10, Descent G2, Approach S50, Instinct 3 AMOLED): labels come out a little larger, and the always-on row may show "8k" where other watches show "8.4k".
+- Roboto Condensed only (epix, MARQ Gen 2, Approach S70, Descent Mk3, D2 Mach 1): numbers and the date are in the watch's bold system font.
+
+Everything still fits. Watches without vector fonts have no `Graphics.VectorFont` class at all, so `drawStr` checks that the class exists before testing a font against it. The sleep-score complication is referenced by its number (42) because it was added in API 6.0.2; on older firmware the face builds and shows `--` for it.
+
+**Not supported yet:** MIP/transflective screens (fēnix 7, fēnix 8 Solar, Forerunner 255/955, Enduro), rectangular screens (Venu Sq 2, Venu X1), monochrome screens (Instinct 2/3 Solar, Instinct E), Instinct Crossover AMOLED (its physical hands sit over the screen) and watches below Connect IQ 4.2.
 
 ## Settings
 
@@ -66,7 +88,7 @@ Copy for the Connect IQ Store listing, which covers what the face itself can't e
 >
 > Press and hold a register to open that metric's Garmin glance. "--" means there's no reading yet, or your watch doesn't offer that metric. "ENERGY" is your Garmin Body Battery, an energy score from 0–100. When the watch battery is at 20% or less, its register turns amber and reads "LOW".
 >
-> Works on Venu 4 (41 mm and 45 mm) and D2 Air X15.
+> Works on round AMOLED Garmin watches: Venu 2/2 Plus/2S/3/3S/4, vivoactive 5/6, Forerunner 70/165/170/265/570/965/970, fēnix 8/9/E, epix (Gen 2)/Pro, MARQ (Gen 2/3), Descent G2/Mk3, Approach S50/S70/S72, D2 Air X10/X15/Mach, Instinct 3 AMOLED.
 >
 > Text follows your watch's Font Scale setting. In always-on mode the face shows outlined hands, the date and a dim row of your three metrics, and shifts slightly each minute to protect the display.
 
@@ -92,7 +114,7 @@ Permissions: `ComplicationSubscriber` (complication values and press-to-open) an
 ## Project layout
 
 ```
-manifest.xml                     app id, Venu 4 41mm/45mm targets, permissions
+manifest.xml                     app id, the 50 round AMOLED targets, permissions
 monkey.jungle
 source/
   MeridianApp.mc                 app entry, settings reload
