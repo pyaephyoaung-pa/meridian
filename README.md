@@ -36,7 +36,7 @@ Values are shown as precisely as fits the register at the current text size: "84
 
 ## Supported watches
 
-Every **round color** watch on Connect IQ 5.0 or newer: 69 device profiles in all, 50 AMOLED and 19 MIP, from 218 px (Forerunner 255S) to 466 px (fēnix 9 Pro 51mm). The layout is drawn in a 454 px design space and scaled to the screen, so every size gets the same layout.
+Every **round color** watch on Connect IQ 4.2 or newer: 69 device profiles in all, 50 AMOLED and 19 MIP, from 218 px (Forerunner 255S) to 466 px (fēnix 9 Pro 51mm). The layout is drawn in a 454 px design space and scaled to the screen, so every size gets the same layout.
 
 ### AMOLED
 

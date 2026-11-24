@@ -7,7 +7,7 @@
                     name="@Strings.AppName"
                     type="watchface">
         <iq:products>
-            <!-- Round color watches on Connect IQ 5.0+ (Garmin's compatible-devices table):
+            <!-- Round color watches on Connect IQ 4.2+ (Garmin's compatible-devices table):
                  AMOLED, and 64-color MIP (fēnix 7, fēnix 8/9 Pro Solar, Enduro 3/4,
                  Forerunner 255/955). Every other round MIP watch is below API 4.2.
                  Not supported: rectangular screens, monochrome (Instinct), Instinct
