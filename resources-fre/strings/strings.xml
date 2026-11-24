@@ -16,7 +16,7 @@
 
     <!-- Gauges (settings) and the new register labels; units stay in English -->
     <string id="GaugesTitle">Jauges</string>
-    <string id="GaugesHelp">Choisissez ce qu'affiche chaque jauge. Maintenez une jauge appuyée pour ouvrir l'aperçu Garmin de cette donnée. ÉNERGIE correspond à votre Body Battery (0 à 100), KCAL à vos calories et BRPM à vos respirations par minute. INTENSITÉ compte les minutes intensives de la semaine. -- signifie qu'il n'y a pas encore de mesure ou que votre montre ne propose pas cette donnée.</string>
+    <string id="GaugesHelp">Choisissez ce qu'affiche chaque jauge. Sur les montres tactiles, maintenez une jauge appuyée pour ouvrir l'aperçu Garmin de cette donnée. ÉNERGIE correspond à votre Body Battery (0 à 100), KCAL à vos calories et BRPM à vos respirations par minute. INTENSITÉ compte les minutes intensives de la semaine. -- signifie qu'il n'y a pas encore de mesure ou que votre montre ne propose pas cette donnée.</string>
     <string id="GaugeLeftTitle">Jauge gauche (9 h)</string>
     <string id="GaugeRightTitle">Jauge droite (3 h)</string>
     <string id="GaugeBottomTitle">Jauge du bas (6 h)</string>

@@ -16,7 +16,7 @@
 
     <!-- Gauges (settings) and the new register labels; units stay in English -->
     <string id="GaugesTitle">Meters</string>
-    <string id="GaugesHelp">Kies wat elke meter toont. Houd een meter ingedrukt om de Garmin-glance van die waarde te openen. ENERGIE is je Body Battery (0–100), KCAL je calorieën en BRPM je ademhalingen per minuut. INTENSITEIT telt de intensiteitsminuten van deze week. -- betekent dat er nog geen meting is, of dat je horloge die waarde niet biedt.</string>
+    <string id="GaugesHelp">Kies wat elke meter toont. Op horloges met touchscreen houd je een meter ingedrukt om de Garmin-glance van die waarde te openen. ENERGIE is je Body Battery (0–100), KCAL je calorieën en BRPM je ademhalingen per minuut. INTENSITEIT telt de intensiteitsminuten van deze week. -- betekent dat er nog geen meting is, of dat je horloge die waarde niet biedt.</string>
     <string id="GaugeLeftTitle">Linkermeter (9 uur)</string>
     <string id="GaugeRightTitle">Rechtermeter (3 uur)</string>
     <string id="GaugeBottomTitle">Ondermeter (6 uur)</string>

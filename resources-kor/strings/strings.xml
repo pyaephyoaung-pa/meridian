@@ -16,7 +16,7 @@
 
     <!-- Gauges (settings) and the new register labels; units stay in English -->
     <string id="GaugesTitle">게이지</string>
-    <string id="GaugesHelp">각 게이지에 표시할 항목을 선택하세요. 게이지를 길게 누르면 해당 항목의 Garmin 글랜스가 열립니다. 에너지는 Body Battery(0~100), KCAL은 칼로리, BRPM은 분당 호흡수입니다. 강도는 이번 주 운동 강도 시간입니다. --는 아직 측정값이 없거나 시계가 해당 항목을 지원하지 않는다는 뜻입니다.</string>
+    <string id="GaugesHelp">각 게이지에 표시할 항목을 선택하세요. 터치스크린 시계에서는 게이지를 길게 누르면 해당 항목의 Garmin 글랜스가 열립니다. 에너지는 Body Battery(0~100), KCAL은 칼로리, BRPM은 분당 호흡수입니다. 강도는 이번 주 운동 강도 시간입니다. --는 아직 측정값이 없거나 시계가 해당 항목을 지원하지 않는다는 뜻입니다.</string>
     <string id="GaugeLeftTitle">왼쪽 게이지(9시)</string>
     <string id="GaugeRightTitle">오른쪽 게이지(3시)</string>
     <string id="GaugeBottomTitle">아래쪽 게이지(6시)</string>

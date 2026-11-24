@@ -3,7 +3,7 @@
 
     <!-- Settings (Garmin Connect) -->
     <string id="GaugesTitle">Gauges</string>
-    <string id="GaugesHelp">Choose what each gauge shows. Press and hold a gauge to open that metric's Garmin glance. ENERGY is your Body Battery (0–100), KCAL your calories and BRPM your breaths per minute. INTENSITY counts this week's intensity minutes. -- means there is no reading yet, or your watch doesn't offer that metric.</string>
+    <string id="GaugesHelp">Choose what each gauge shows. On touchscreen watches, press and hold a gauge to open that metric's Garmin glance. ENERGY is your Body Battery (0–100), KCAL your calories and BRPM your breaths per minute. INTENSITY counts this week's intensity minutes. -- means there is no reading yet, or your watch doesn't offer that metric.</string>
     <string id="GaugeLeftTitle">Left gauge (9 o'clock)</string>
     <string id="GaugeRightTitle">Right gauge (3 o'clock)</string>
     <string id="GaugeBottomTitle">Bottom gauge (6 o'clock)</string>

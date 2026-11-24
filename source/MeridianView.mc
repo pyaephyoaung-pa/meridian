@@ -16,7 +16,8 @@ import Toybox.WatchUi;
 // by default heart rate, Body Battery and watch battery.
 //
 // All geometry is written in the design's 454 px space (Venu 4 45mm) and
-// scaled by w/454 at draw time, so the 41mm (390 px) gets the same layout.
+// scaled by w/454 at draw time, so every round screen from 218 px
+// (Forerunner 255S) to 466 px gets the same layout.
 // Shared with MeridianDelegate for press hit-testing.
 module Meridian {
     const SIZE   = 454.0;
@@ -62,9 +63,39 @@ module Meridian {
         42 as Complications.Type
     ];
 
-    // Metric shown in a slot, from settings; an unknown value falls back to
-    // that slot's default
+    // Shown instead of Body Battery on a watch that doesn't have it (the
+    // right register's default): the first of these no other register shows
+    const BODY_BATTERY_STAND_INS = [M_STEPS, M_CALORIES, M_INTENSITY, M_FLOORS];
+
+    var _bbChecked as Boolean = false;
+    var _bbOffered as Boolean = true;
+
+    // Metric shown in a slot, from settings
     function slotMetric(slot as Number) as Number {
+        return slotMetrics()[slot] as Number;
+    }
+
+    // Metrics of all three slots: an unknown value falls back to that slot's
+    // default, and Body Battery gets a stand-in where the watch lacks it
+    function slotMetrics() as Array<Number> {
+        var ms = [settingMetric(0), settingMetric(1), settingMetric(2)] as Array<Number>;
+        if (!bodyBatteryOffered()) {
+            for (var i = 0; i < 3; i++) {
+                if (ms[i] == M_BODY_BATTERY) {
+                    for (var j = 0; j < BODY_BATTERY_STAND_INS.size(); j++) {
+                        var c = BODY_BATTERY_STAND_INS[j] as Number;
+                        if (ms.indexOf(c) < 0) {
+                            ms[i] = c;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        return ms;
+    }
+
+    function settingMetric(slot as Number) as Number {
         var v = Application.Properties.getValue(SLOT_KEYS[slot] as String);
         if (v instanceof Number && v >= 0 && v < METRIC_COUNT) {
             return v;
@@ -72,13 +103,29 @@ module Meridian {
         return SLOT_DEFAULTS[slot] as Number;
     }
 
-    typedef Font as Graphics.VectorFont or Graphics.FontDefinition;
+    // Every watch with Body Battery offers it as a complication. Checked once.
+    function bodyBatteryOffered() as Boolean {
+        if (!_bbChecked) {
+            _bbChecked = true;
+            try {
+                _bbOffered = Complications.getComplication(
+                    new Complications.Id(Complications.COMPLICATION_TYPE_BODY_BATTERY)) != null;
+            } catch (e) {
+                _bbOffered = false;
+            }
+        }
+        return _bbOffered;
+    }
+
+    typedef Font as Graphics.VectorFont or Graphics.FontType;
 }
 
 class MeridianView extends WatchUi.WatchFace {
 
     // ---- Palette (see design "States & tokens") ----
     // Contrast on black: text >= 6:1; graphics needed to read the face >= 3:1.
+    // These are the AMOLED colors; on MIP screens loadPalette() swaps the main
+    // face's colors for ones from the 64-color palette.
     private const C_BLACK     = 0x000000;  // ground, pixels off
     private const C_IVORY     = 0xEDE6D6;  // indices, values
     private const C_HAND      = 0xFFF8EC;  // hour + minute hands, brighter than the indices
@@ -100,6 +147,7 @@ class MeridianView extends WatchUi.WatchFace {
 
     // Accent (setting AccentColor): Champagne, Ivory, Sky, Rose
     private const ACCENTS = [0xD4B37A, 0xEDE6D6, 0x6DB5E3, 0xE8735E];
+    private const ACCENT_IVORY = 1;
 
     // Gauge and icon color per metric (Meridian.M_*), all >= 3:1 on black
     private const METRIC_COLORS = [
@@ -114,6 +162,26 @@ class MeridianView extends WatchUi.WatchFace {
         0xE87A9A,  // Pulse Ox: pink
         0x7DD3E8,  // respiration: aqua
         0x8E9CF0   // sleep score: indigo
+    ];
+
+    // MIP screens (fēnix 7, fēnix 8 Solar, Enduro, Forerunner 255/955) show
+    // 64 colors, two bits per channel (00, 55, AA, FF). Any other color is
+    // rounded to the nearest one, which turns the warm grays above olive or
+    // pink and merges several metric colors, so there the face uses these,
+    // picked from that palette (see loadPalette).
+    private const MIP_ACCENTS = [0xFFAA55, 0xFFFFFF, 0x55AAFF, 0xFF5555];
+    private const MIP_METRIC_COLORS = [
+        0xFF5555,  // heart rate: rose
+        0x55AAFF,  // Body Battery: sky
+        0x55FF55,  // watch battery: green
+        0xAAAAFF,  // stress: lavender
+        0x55AAAA,  // steps: teal
+        0xAAAA55,  // floors: khaki
+        0xFFFF55,  // intensity minutes: yellow
+        0xFFAA55,  // calories: orange
+        0xFF55AA,  // Pulse Ox: pink
+        0x55FFFF,  // respiration: aqua
+        0x5555FF   // sleep score: indigo
     ];
 
     // Icons per metric in a 24-unit viewBox, as drawing ops:
@@ -209,10 +277,28 @@ class MeridianView extends WatchUi.WatchFace {
     private const PULSE_OX_MAX_AGE = 24 * 3600;   // s
 
     private const MODE_ON  = 0;
-    private const MODE_AOD = 1;
+    private const MODE_LOW = 1;   // low power: always-on on AMOLED, a minute tick on MIP
     private const MODE_OFF = 2;
 
     private var _lowPower as Boolean = false;
+    // MIP (transflective) screen: always on, no burn-in, 64 colors
+    private var _mip as Boolean = false;
+
+    // Main face colors for this screen, set in loadPalette()
+    private var _cIvory     as Number = 0;
+    private var _cHand      as Number = 0;
+    private var _cFacet     as Number = 0;
+    private var _cGraphite  as Number = 0;
+    private var _cAsh       as Number = 0;
+    private var _cAmber     as Number = 0;
+    private var _cTickMin   as Number = 0;
+    private var _cTick5     as Number = 0;
+    private var _cTickHour  as Number = 0;
+    private var _cDateEdge  as Number = 0;
+    private var _cChampagne as Number = 0;
+    private var _accents      as Array<Number> = [] as Array<Number>;
+    private var _metricColors as Array<Number> = [] as Array<Number>;
+
     private var _accent as Number = 0xD4B37A;
     private var _handAccent as Number = 0xD4B37A;   // seconds hand + cap: never ivory-on-ivory
     private var _showSeconds as Boolean = true;
@@ -231,6 +317,10 @@ class MeridianView extends WatchUi.WatchFace {
     private var _dayFont   as Meridian.Font = Graphics.FONT_XTINY;
     private var _dateFont  as Meridian.Font = Graphics.FONT_TINY;
     private var _aodFont   as Meridian.Font = Graphics.FONT_TINY;
+    // Label fonts where there is no vector font: the system's smallest, or
+    // bundled bitmap fonts on watches where that is too wide (loadLabelFonts)
+    private var _labelBitmap as Meridian.Font = Graphics.FONT_XTINY;
+    private var _labelBitmapSmall as Meridian.Font = Graphics.FONT_XTINY;
     // CJK faces at label/weekday size, so translated labels match the Latin ones
     private var _cjkLabelFont as Graphics.VectorFont? = null;
     private var _cjkDayFont   as Graphics.VectorFont? = null;
@@ -284,6 +374,7 @@ class MeridianView extends WatchUi.WatchFace {
         ] as Array<String>;
         _lblLow = WatchUi.loadResource(Rez.Strings.LabelBatteryLow) as String;
         _decimalSep = WatchUi.loadResource(Rez.Strings.DecimalSeparator) as String;
+        loadLabelFonts();
         _fontScale = readFontScale();
         if (Toybox has :Complications) {
             try {
@@ -292,21 +383,59 @@ class MeridianView extends WatchUi.WatchFace {
                 // complications unavailable on this device/firmware
             }
         }
+        loadPalette();
         loadSettings();
+    }
+
+    // AMOLED watches report that they need burn-in protection; MIP ones don't.
+    private function loadPalette() as Void {
+        var ds = System.getDeviceSettings();
+        _mip = !((ds has :requiresBurnInProtection) && ds.requiresBurnInProtection);
+        if (_mip) {
+            // Flat white hands (a light facet would only dim them on a
+            // reflective screen), grays from the palette's two steps
+            _cIvory     = 0xFFFFFF;
+            _cHand      = 0xFFFFFF;
+            _cFacet     = 0xFFFFFF;
+            _cGraphite  = 0x555555;
+            _cAsh       = 0xAAAAAA;
+            _cAmber     = 0xFFAA00;
+            _cTickMin   = 0xAAAAAA;
+            _cTick5     = 0xAAAAAA;
+            _cTickHour  = 0xFFFFFF;
+            _cDateEdge  = 0x555555;
+            _cChampagne = MIP_ACCENTS[0] as Number;
+            _accents      = MIP_ACCENTS as Array<Number>;
+            _metricColors = MIP_METRIC_COLORS as Array<Number>;
+        } else {
+            _cIvory     = C_IVORY;
+            _cHand      = C_HAND;
+            _cFacet     = C_FACET;
+            _cGraphite  = C_GRAPHITE;
+            _cAsh       = C_ASH;
+            _cAmber     = C_AMBER;
+            _cTickMin   = C_TICK_MIN;
+            _cTick5     = C_TICK_5;
+            _cTickHour  = C_TICK_HOUR;
+            _cDateEdge  = C_DATE_EDGE;
+            _cChampagne = C_CHAMPAGNE;
+            _accents      = ACCENTS as Array<Number>;
+            _metricColors = METRIC_COLORS as Array<Number>;
+        }
     }
 
     function loadSettings() as Void {
         var idx = Application.Properties.getValue("AccentColor");
-        if (!(idx instanceof Number) || idx < 0 || idx >= ACCENTS.size()) {
+        if (!(idx instanceof Number) || idx < 0 || idx >= _accents.size()) {
             idx = 0;
         }
-        _accent = ACCENTS[idx as Number];
+        _accent = _accents[idx as Number];
         // An ivory seconds hand would match the ivory hour and minute hands
-        _handAccent = (_accent == C_IVORY) ? C_CHAMPAGNE : _accent;
+        _handAccent = (idx == ACCENT_IVORY) ? _cChampagne : _accent;
         var secs = Application.Properties.getValue("ShowSeconds");
         _showSeconds = !(secs instanceof Boolean) || secs;
 
-        _slots = [Meridian.slotMetric(0), Meridian.slotMetric(1), Meridian.slotMetric(2)] as Array<Number>;
+        _slots = Meridian.slotMetrics();
         subscribeSlots();
         _stale = -1;          // read history for newly chosen metrics right away
         _battLow = false;
@@ -394,15 +523,28 @@ class MeridianView extends WatchUi.WatchFace {
         return (s < SCALE_MIN) ? SCALE_MIN : ((s > SCALE_MAX) ? SCALE_MAX : s);
     }
 
+    // Forerunner 255 family (see monkey.jungle): Roboto Condensed bitmaps
+    (:labelFonts)
+    private function loadLabelFonts() as Void {
+        _labelBitmap = WatchUi.loadResource(Rez.Fonts.LabelFont) as WatchUi.FontResource;
+        _labelBitmapSmall = WatchUi.loadResource(Rez.Fonts.LabelFontSmall) as WatchUi.FontResource;
+    }
+
+    (:systemLabelFonts)
+    private function loadLabelFonts() as Void {
+    }
+
     private function buildFonts() as Void {
         if (!_vectorFonts) {
+            _labelFont = _labelBitmap;
+            _labelFontSmall = _labelBitmapSmall;
             return;
         }
         var s = _fontScale;
         var ls = (s > LABEL_SCALE_MAX) ? LABEL_SCALE_MAX : s;
         _valueFont = vectorFont(["RobotoRegular"], VALUE_PX * s, Graphics.FONT_SMALL);
-        _labelFont = vectorFont(["RobotoCondensedRegular", "RobotoRegular"], LABEL_PX * ls, Graphics.FONT_XTINY);
-        _labelFontSmall = vectorFont(["RobotoCondensedRegular", "RobotoRegular"], LABEL_PX * ls * 0.82, Graphics.FONT_XTINY);
+        _labelFont = vectorFont(["RobotoCondensedRegular", "RobotoRegular"], LABEL_PX * ls, _labelBitmap);
+        _labelFontSmall = vectorFont(["RobotoCondensedRegular", "RobotoRegular"], LABEL_PX * ls * 0.82, _labelBitmapSmall);
         _dayFont   = vectorFont(["RobotoRegular"], DAY_PX * s, Graphics.FONT_XTINY);
         _dateFont  = vectorFont(["RobotoMedium", "RobotoRegular"], DATE_PX * s, Graphics.FONT_TINY);
         _aodFont   = vectorFont(["RobotoRegular"], AOD_PX * s, Graphics.FONT_TINY);
@@ -467,7 +609,9 @@ class MeridianView extends WatchUi.WatchFace {
         var clock = System.getClockTime();
         updateData(clock);
 
-        if (mode == MODE_AOD) {
+        // A MIP screen stays on and can't burn in, so in low power it keeps
+        // the full face; it is only redrawn once a minute, so no seconds hand
+        if (mode == MODE_LOW && !_mip) {
             drawAlwaysOn(dc, clock);
             return;
         }
@@ -476,10 +620,10 @@ class MeridianView extends WatchUi.WatchFace {
         _oy = 0.0;
         drawStaticLayer(dc);
         drawSubdialValues(dc);
-        drawHands(dc, clock);
+        drawHands(dc, clock, mode == MODE_ON);
     }
 
-    // Always-on when either the sleep callbacks or the system say so: a face
+    // Low power when either the sleep callbacks or the system say so: a face
     // (re)started while the screen is already in always-on gets no
     // onEnterSleep. Nothing is drawn while the display is off.
     private function displayMode() as Number {
@@ -491,7 +635,7 @@ class MeridianView extends WatchUi.WatchFace {
             }
             low = low || (m == System.DISPLAY_MODE_LOW_POWER);
         }
-        return low ? MODE_AOD : MODE_ON;
+        return low ? MODE_LOW : MODE_ON;
     }
 
     // =====================================================================
@@ -524,7 +668,7 @@ class MeridianView extends WatchUi.WatchFace {
             // Low battery is spelled out, not only shown in amber
             var low = _battLow && m == Meridian.M_BATTERY;
             drawSubdialFrame(dc, Meridian.SLOT_X[i] as Float, Meridian.SLOT_Y[i] as Float,
-                low ? _lblLow : _labels[m], low ? C_AMBER : C_ASH);
+                low ? _lblLow : _labels[m], low ? _cAmber : _cAsh);
         }
         drawDateWindow(dc);
     }
@@ -533,7 +677,7 @@ class MeridianView extends WatchUi.WatchFace {
     private function drawDial(dc as Dc) as Void {
         for (var i = 0; i < 60; i++) {
             var five = (i % 5 == 0);
-            dc.setColor(five ? C_TICK_HOUR : C_TICK_MIN, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(five ? _cTickHour : _cTickMin, Graphics.COLOR_TRANSPARENT);
             dc.setPenWidth(pen(five ? 3.0 : 1.4));
             radialLine(dc, i * 6.0, 211.0, 219.0);
         }
@@ -546,7 +690,7 @@ class MeridianView extends WatchUi.WatchFace {
         // 1..11 o'clock: ivory indices, 7 px wide. They can't grow in length:
         // inward they'd touch the label under the 6 o'clock register, outward
         // the minute track.
-        dc.setColor(C_IVORY, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_cIvory, Graphics.COLOR_TRANSPARENT);
         for (var h = 1; h < 12; h++) {
             fillDesignRect(dc, 223.5, 20.0, 7.0, 30.0, h * 30.0);
         }
@@ -559,14 +703,17 @@ class MeridianView extends WatchUi.WatchFace {
         var cx = X(dx);
         var cy = Y(dy);
 
-        dc.setColor(C_SUB_RING, Graphics.COLOR_TRANSPARENT);
-        dc.setPenWidth(1);
-        dc.drawCircle(cx, cy, RING_R * _k);
+        // The near-black hairline would round to black on MIP; skipped there
+        if (!_mip) {
+            dc.setColor(C_SUB_RING, Graphics.COLOR_TRANSPARENT);
+            dc.setPenWidth(1);
+            dc.drawCircle(cx, cy, RING_R * _k);
+        }
 
         var r = Meridian.SUB_R * _k;
         var p = pen(GAUGE_PEN);
         dc.setPenWidth(p);
-        dc.setColor(C_GRAPHITE, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_cGraphite, Graphics.COLOR_TRANSPARENT);
         dc.drawArc(cx, cy, r, Graphics.ARC_CLOCKWISE, GAUGE_START, GAUGE_END);
         arcCap(dc, cx, cy, r, GAUGE_END.toFloat(), p / 2.0);
 
@@ -577,7 +724,7 @@ class MeridianView extends WatchUi.WatchFace {
         var s = -Math.sin(a);
         var r0 = r - 5 * _k;
         var r1 = r + 5 * _k;
-        dc.setColor(C_TICK_5, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_cTick5, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(pen(2.0));
         dc.drawLine(cx + r0 * c, cy + r0 * s, cx + r1 * c, cy + r1 * s);
         dc.setPenWidth(1);
@@ -604,8 +751,8 @@ class MeridianView extends WatchUi.WatchFace {
             // Watch battery: amber (and the "LOW" label) at 20% or less of the value shown
             var low = _battLow && m == Meridian.M_BATTERY;
             drawSubdialValue(dc, Meridian.SLOT_X[i] as Float, Meridian.SLOT_Y[i] as Float, frac,
-                low ? C_AMBER : METRIC_COLORS[m] as Number, m,
-                valueText(dc, m, _valueFont, VALUE_MAX_W * _k), low ? C_AMBER : C_IVORY,
+                low ? _cAmber : _metricColors[m], m,
+                valueText(dc, m, _valueFont, VALUE_MAX_W * _k), low ? _cAmber : _cIvory,
                 (m == Meridian.M_BATTERY) ? frac : 0.0);
         }
     }
@@ -680,7 +827,7 @@ class MeridianView extends WatchUi.WatchFace {
         var w = drawDateText(dc, DATE_Y, _dateFont, _accent);
         var bw = w + 2 * DATE_PAD * _k;
         var bh = DATE_H * _k * ((_fontScale > 1.0) ? _fontScale : 1.0);
-        dc.setColor(C_DATE_EDGE, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_cDateEdge, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(1);
         dc.drawRoundedRectangle(X(Meridian.C) - bw / 2, Y(DATE_Y) - bh / 2, bw, bh, 6 * _k);
     }
@@ -696,7 +843,7 @@ class MeridianView extends WatchUi.WatchFace {
         var left = X(Meridian.C) - total / 2;
         var cy = Y(dy);
 
-        dc.setColor(C_ASH, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_cAsh, Graphics.COLOR_TRANSPARENT);
         drawTracked(dc, left + dayW / 2, cy, _dayFont, _cjkDayFont, day, track);
         dc.setColor(numColor, Graphics.COLOR_TRANSPARENT);
         drawStr(dc, left + dayW + gap, cy, numFont, num,
@@ -705,7 +852,8 @@ class MeridianView extends WatchUi.WatchFace {
     }
 
     // Faceted hour/minute hands, accent seconds hand with counterweight ring
-    private function drawHands(dc as Dc, clock as System.ClockTime) as Void {
+    // (when the setting is on and the face redraws every second)
+    private function drawHands(dc as Dc, clock as System.ClockTime, seconds as Boolean) as Void {
         var h = clock.hour % 12;
         var m = clock.min;
         var s = clock.sec;
@@ -715,7 +863,7 @@ class MeridianView extends WatchUi.WatchFace {
         drawFacetedHand(dc, HOUR_HAND, hourDeg);
         drawFacetedHand(dc, MINUTE_HAND, minDeg);
 
-        if (_showSeconds) {
+        if (_showSeconds && seconds) {
             var secDeg = s * 6.0;
             var tail = rot(Meridian.C, 275.0, secDeg);
             var tip = rot(Meridian.C, 27.0, secDeg);
@@ -746,10 +894,12 @@ class MeridianView extends WatchUi.WatchFace {
         dc.setPenWidth(pen(HALO * 2));
         outline(dc, pts);
         dc.setPenWidth(1);
-        dc.setColor(C_HAND, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_cHand, Graphics.COLOR_TRANSPARENT);
         dc.fillPolygon(pts);
-        dc.setColor(C_FACET, Graphics.COLOR_TRANSPARENT);
-        dc.fillPolygon([pts[0], pts[5], pts[4], pts[3]]);   // tip, left shoulder, left base, tail
+        if (_cFacet != _cHand) {
+            dc.setColor(_cFacet, Graphics.COLOR_TRANSPARENT);
+            dc.fillPolygon([pts[0], pts[5], pts[4], pts[3]]);   // tip, left shoulder, left base, tail
+        }
     }
 
     // =====================================================================
