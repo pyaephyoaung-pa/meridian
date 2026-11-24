@@ -197,3 +197,7 @@ SDK="$(cat ~/Library/Application\ Support/Garmin/ConnectIQ/current-sdk.cfg)"
 Use `-d venu441mm` for the 41mm, or any id from `manifest.xml` (for example `fenix7`, `fr255s`) for other watches; each needs its device files from SDK Manager. In the simulator, set test values under Simulation → Activity Data, and switch to always-on with Settings → Display Mode → Always-On (Off blanks the screen, High Power returns to the full face).
 
 To sideload to a watch, copy the `.prg` to `GARMIN/APPS/` over USB.
+
+### CI
+
+`.github/workflows/build.yml` builds with `-l 3` on every push to `main`, every pull request and on demand, for four profiles that cover the screen and font paths: `venu445mm` (AMOLED), `venu2` (AMOLED without Roboto), `fenix7` (MIP) and `fr255s` (MIP with the bundled bitmap label fonts). It downloads the SDK and device files with [connect-iq-sdk-manager](https://github.com/lindell/connect-iq-sdk-manager-cli), which needs a Garmin account in the `GARMIN_USERNAME` and `GARMIN_PASSWORD` repository secrets, and signs with a throwaway key.

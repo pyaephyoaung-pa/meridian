@@ -1,0 +1,95 @@
+name: Build
+
+# Compiles the watch face with strict type checking (-l 3) for a few
+# representative device profiles, so a change that breaks one screen type or
+# font path fails here instead of in the simulator.
+#
+# Needs two repository secrets (Settings > Secrets and variables > Actions):
+#   GARMIN_USERNAME, GARMIN_PASSWORD  a Garmin account without two-step
+#   verification, used only to download the SDK and device files.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Semver constraint for the Connect IQ SDK; pin an exact version (e.g. 8.3.0)
+  # to match the SDK used locally if newer releases cause surprises.
+  CIQ_SDK_VERSION: ">=8.0.0"
+  # venu445mm   AMOLED, 454 px, the design target
+  # venu2       AMOLED without Roboto fonts (system-font fallback)
+  # fenix7      MIP, 64-color palette, Roboto Condensed only
+  # fr255s      MIP, no vector fonts: bundled 218 px bitmap label fonts
+  #             from monkey.jungle, smallest screen
+  DEVICES: venu445mm venu2 fenix7 fr255s
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install Connect IQ SDK manager
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          curl -fsSL https://raw.githubusercontent.com/lindell/connect-iq-sdk-manager-cli/master/install.sh \
+            | sh -s -- -b "$HOME/.local/bin"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Download SDK and device files
+        env:
+          GARMIN_USERNAME: ${{ secrets.GARMIN_USERNAME }}
+          GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
+        run: |
+          if [ -z "$GARMIN_USERNAME" ] || [ -z "$GARMIN_PASSWORD" ]; then
+            echo "::error::Set the GARMIN_USERNAME and GARMIN_PASSWORD repository secrets."
+            exit 1
+          fi
+          connect-iq-sdk-manager agreement accept
+          connect-iq-sdk-manager login
+          connect-iq-sdk-manager sdk set "$CIQ_SDK_VERSION"
+          echo "$(connect-iq-sdk-manager sdk current-path --bin)" >> "$GITHUB_PATH"
+          args=""
+          for d in $DEVICES; do args="$args --device=$d"; done
+          connect-iq-sdk-manager device download $args
+
+      - name: Generate throwaway signing key
+        run: |
+          openssl genrsa -out key.pem 4096
+          openssl pkcs8 -topk8 -inform PEM -outform DER -in key.pem -out developer_key.der -nocrypt
+
+      - name: Build
+        run: |
+          monkeyc --version
+          mkdir -p bin
+          failed=""
+          for d in $DEVICES; do
+            echo "::group::$d"
+            if monkeyc -d "$d" -f monkey.jungle -o "bin/Meridian-$d.prg" -y developer_key.der -w -l 3; then
+              echo "| $d | ✅ |" >> results.md
+            else
+              echo "| $d | ❌ |" >> results.md
+              failed="$failed $d"
+            fi
+            echo "::endgroup::"
+          done
+          { echo "| Device | Build |"; echo "|---|---|"; cat results.md; } >> "$GITHUB_STEP_SUMMARY"
+          if [ -n "$failed" ]; then
+            echo "::error::Build failed for:$failed"
+            exit 1
+          fi
