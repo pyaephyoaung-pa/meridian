@@ -16,7 +16,7 @@
 
     <!-- Gauges (settings) and the new register labels; units stay in English -->
     <string id="GaugesTitle">仪表</string>
-    <string id="GaugesHelp">选择每个仪表显示的内容。长按仪表可打开该项目的 Garmin 概览。“能量”即 Body Battery（0–100），KCAL 为卡路里，BRPM 为每分钟呼吸次数。“强度”为本周的强度活动分钟数。“--”表示暂无读数，或手表不支持该项目。</string>
+    <string id="GaugesHelp">选择每个仪表显示的内容。在触摸屏手表上，长按仪表可打开该项目的 Garmin 概览。“能量”即 Body Battery（0–100），KCAL 为卡路里，BRPM 为每分钟呼吸次数。“强度”为本周的强度活动分钟数。“--”表示暂无读数，或手表不支持该项目。</string>
     <string id="GaugeLeftTitle">左侧仪表（9 点）</string>
     <string id="GaugeRightTitle">右侧仪表（3 点）</string>
     <string id="GaugeBottomTitle">下方仪表（6 点）</string>

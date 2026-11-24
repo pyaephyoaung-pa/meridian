@@ -16,7 +16,7 @@
 
     <!-- Gauges (settings) and the new register labels; units stay in English -->
     <string id="GaugesTitle">ゲージ</string>
-    <string id="GaugesHelp">各ゲージに表示する項目を選びます。ゲージを長押しすると、その項目のGarminグランスが開きます。「体力」はBody Battery（0〜100）、KCALは消費カロリー、BRPMは1分あたりの呼吸数です。「強度」は今週の運動強度の分数です。「--」はまだ測定値がないか、ウォッチがその項目に対応していないことを示します。</string>
+    <string id="GaugesHelp">各ゲージに表示する項目を選びます。タッチスクリーン搭載のウォッチでは、ゲージを長押しすると、その項目のGarminグランスが開きます。「体力」はBody Battery（0〜100）、KCALは消費カロリー、BRPMは1分あたりの呼吸数です。「強度」は今週の運動強度の分数です。「--」はまだ測定値がないか、ウォッチがその項目に対応していないことを示します。</string>
     <string id="GaugeLeftTitle">左ゲージ（9時）</string>
     <string id="GaugeRightTitle">右ゲージ（3時）</string>
     <string id="GaugeBottomTitle">下ゲージ（6時）</string>

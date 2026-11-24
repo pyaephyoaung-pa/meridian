@@ -16,7 +16,7 @@
 
     <!-- Gauges (settings) and the new register labels; units stay in English -->
     <string id="GaugesTitle">Anzeigen</string>
-    <string id="GaugesHelp">Wähle, was jede Anzeige zeigt. Halte eine Anzeige gedrückt, um den Garmin-Glance dieses Werts zu öffnen. ENERGIE ist deine Body Battery (0–100), KCAL deine Kalorien und BRPM deine Atemzüge pro Minute. INTENSITÄT zählt die Intensitätsminuten dieser Woche. -- bedeutet, dass noch kein Messwert vorliegt oder deine Uhr diesen Wert nicht anbietet.</string>
+    <string id="GaugesHelp">Wähle, was jede Anzeige zeigt. Auf Uhren mit Touchscreen hältst du eine Anzeige gedrückt, um den Garmin-Glance dieses Werts zu öffnen. ENERGIE ist deine Body Battery (0–100), KCAL deine Kalorien und BRPM deine Atemzüge pro Minute. INTENSITÄT zählt die Intensitätsminuten dieser Woche. -- bedeutet, dass noch kein Messwert vorliegt oder deine Uhr diesen Wert nicht anbietet.</string>
     <string id="GaugeLeftTitle">Linke Anzeige (9 Uhr)</string>
     <string id="GaugeRightTitle">Rechte Anzeige (3 Uhr)</string>
     <string id="GaugeBottomTitle">Untere Anzeige (6 Uhr)</string>
