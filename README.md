@@ -205,6 +205,8 @@ To sideload to a watch, copy the `.prg` to `GARMIN/APPS/` over USB.
 ```bash
 curl -fsSL https://raw.githubusercontent.com/lindell/connect-iq-sdk-manager-cli/master/install.sh | sh -s -- -b ~/.local/bin
 export PATH="$HOME/.local/bin:$PATH"
+connect-iq-sdk-manager agreement view     # read the Connect IQ SDK license
+connect-iq-sdk-manager agreement accept
 connect-iq-sdk-manager login      # opens Garmin sign-in in the browser; two-step verification works
 gh secret set GARMIN_TOKEN < ~/.Garmin/ConnectIQ/token.json
 ```
