@@ -1,0 +1,111 @@
+name: Build
+
+# Compiles the watch face with strict type checking (-l 3) for a few
+# representative device profiles, so a change that breaks one screen type or
+# font path fails here instead of in the simulator.
+#
+# Needs one repository secret (Settings > Secrets and variables > Actions):
+#   GARMIN_TOKEN  the contents of ~/.Garmin/ConnectIQ/token.json after running
+#   `connect-iq-sdk-manager login` (browser sign-in, two-step verification
+#   works). Used only to download the SDK and device files. It expires; the
+#   run warns two weeks ahead, then sign in again and update the secret.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Connect IQ SDK and SDK-manager versions; bump deliberately.
+  CIQ_SDK_VERSION: "9.3.0"
+  CIQ_MANAGER_VERSION: v0.8.4
+  # venu445mm   AMOLED, 454 px, the design target
+  # venu2       AMOLED without Roboto fonts (system-font fallback)
+  # fenix7      MIP, 64-color palette, Roboto Condensed only
+  # fr255s      MIP, no vector fonts: bundled 218 px bitmap label fonts
+  #             from monkey.jungle, smallest screen
+  DEVICES: venu445mm venu2 fenix7 fr255s
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install Connect IQ SDK manager
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          curl -fsSL https://raw.githubusercontent.com/lindell/connect-iq-sdk-manager-cli/master/install.sh \
+            | sh -s -- -b "$HOME/.local/bin" "$CIQ_MANAGER_VERSION"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Restore Garmin login token
+        env:
+          GARMIN_TOKEN: ${{ secrets.GARMIN_TOKEN }}
+        run: |
+          if [ -z "$GARMIN_TOKEN" ]; then
+            echo "::error::Set the GARMIN_TOKEN repository secret (contents of ~/.Garmin/ConnectIQ/token.json)."
+            exit 1
+          fi
+          mkdir -p "$HOME/.Garmin/ConnectIQ"
+          printf '%s' "$GARMIN_TOKEN" > "$HOME/.Garmin/ConnectIQ/token.json"
+          chmod 600 "$HOME/.Garmin/ConnectIQ/token.json"
+          expires=$(jq -r '.refreshTokenExpiresIn' "$HOME/.Garmin/ConnectIQ/token.json")
+          left=$(( ($(date -d "$expires" +%s) - $(date +%s)) / 86400 ))
+          echo "Garmin login token expires $expires ($left days left)"
+          if [ "$left" -lt 0 ]; then
+            echo "::error::GARMIN_TOKEN expired on $expires. Run connect-iq-sdk-manager login and update the secret."
+            exit 1
+          elif [ "$left" -lt 14 ]; then
+            echo "::warning::GARMIN_TOKEN expires in $left days ($expires). Run connect-iq-sdk-manager login and update the secret."
+          fi
+
+      - name: Download SDK and device files
+        run: |
+          connect-iq-sdk-manager agreement accept
+          connect-iq-sdk-manager sdk set "$CIQ_SDK_VERSION"
+          echo "$(connect-iq-sdk-manager sdk current-path --bin)" >> "$GITHUB_PATH"
+          # Every device in the manifest, not only $DEVICES: monkeyc checks the
+          # whole manifest and the device qualifiers in monkey.jungle against
+          # the installed device files.
+          connect-iq-sdk-manager device download --manifest=manifest.xml
+
+      - name: Generate throwaway signing key
+        run: |
+          openssl genrsa -out key.pem 4096
+          openssl pkcs8 -topk8 -inform PEM -outform DER -in key.pem -out developer_key.der -nocrypt
+
+      - name: Build
+        run: |
+          monkeyc --version
+          mkdir -p bin
+          failed=""
+          for d in $DEVICES; do
+            echo "::group::$d"
+            if monkeyc -d "$d" -f monkey.jungle -o "bin/Meridian-$d.prg" -y developer_key.der -w -l 3; then
+              echo "| $d | ✅ |" >> results.md
+            else
+              echo "| $d | ❌ |" >> results.md
+              failed="$failed $d"
+            fi
+            echo "::endgroup::"
+          done
+          { echo "| Device | Build |"; echo "|---|---|"; cat results.md; } >> "$GITHUB_STEP_SUMMARY"
+          if [ -n "$failed" ]; then
+            echo "::error::Build failed for:$failed"
+            exit 1
+          fi

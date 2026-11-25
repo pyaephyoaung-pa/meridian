@@ -197,3 +197,18 @@ SDK="$(cat ~/Library/Application\ Support/Garmin/ConnectIQ/current-sdk.cfg)"
 Use `-d venu441mm` for the 41mm, or any id from `manifest.xml` (for example `fenix7`, `fr255s`) for other watches; each needs its device files from SDK Manager. In the simulator, set test values under Simulation → Activity Data, and switch to always-on with Settings → Display Mode → Always-On (Off blanks the screen, High Power returns to the full face).
 
 To sideload to a watch, copy the `.prg` to `GARMIN/APPS/` over USB.
+
+### CI
+
+`.github/workflows/build.yml` builds with `-l 3` on every push to `main`, every pull request and on demand, for four profiles that cover the screen and font paths: `venu445mm` (AMOLED), `venu2` (AMOLED without Roboto), `fenix7` (MIP) and `fr255s` (MIP with the bundled bitmap label fonts). It downloads the SDK and device files with [connect-iq-sdk-manager](https://github.com/lindell/connect-iq-sdk-manager-cli), and signs with a throwaway key. The download needs a Garmin login token in the `GARMIN_TOKEN` repository secret:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/lindell/connect-iq-sdk-manager-cli/master/install.sh | sh -s -- -b ~/.local/bin
+export PATH="$HOME/.local/bin:$PATH"
+connect-iq-sdk-manager agreement view     # read the Connect IQ SDK license
+connect-iq-sdk-manager agreement accept
+connect-iq-sdk-manager login      # opens Garmin sign-in in the browser; two-step verification works
+gh secret set GARMIN_TOKEN < ~/.Garmin/ConnectIQ/token.json
+```
+
+The token expires; the build warns two weeks before, and then the same steps renew it.
