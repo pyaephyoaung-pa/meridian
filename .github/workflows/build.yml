@@ -4,9 +4,11 @@ name: Build
 # representative device profiles, so a change that breaks one screen type or
 # font path fails here instead of in the simulator.
 #
-# Needs two repository secrets (Settings > Secrets and variables > Actions):
-#   GARMIN_USERNAME, GARMIN_PASSWORD  a Garmin account without two-step
-#   verification, used only to download the SDK and device files.
+# Needs one repository secret (Settings > Secrets and variables > Actions):
+#   GARMIN_TOKEN  the contents of ~/.Garmin/ConnectIQ/token.json after running
+#   `connect-iq-sdk-manager login` (browser sign-in, two-step verification
+#   works). Used only to download the SDK and device files. It expires; the
+#   run warns two weeks ahead, then sign in again and update the secret.
 
 on:
   push:
@@ -51,17 +53,30 @@ jobs:
             | sh -s -- -b "$HOME/.local/bin"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
-      - name: Download SDK and device files
+      - name: Restore Garmin login token
         env:
-          GARMIN_USERNAME: ${{ secrets.GARMIN_USERNAME }}
-          GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
+          GARMIN_TOKEN: ${{ secrets.GARMIN_TOKEN }}
         run: |
-          if [ -z "$GARMIN_USERNAME" ] || [ -z "$GARMIN_PASSWORD" ]; then
-            echo "::error::Set the GARMIN_USERNAME and GARMIN_PASSWORD repository secrets."
+          if [ -z "$GARMIN_TOKEN" ]; then
+            echo "::error::Set the GARMIN_TOKEN repository secret (contents of ~/.Garmin/ConnectIQ/token.json)."
             exit 1
           fi
+          mkdir -p "$HOME/.Garmin/ConnectIQ"
+          printf '%s' "$GARMIN_TOKEN" > "$HOME/.Garmin/ConnectIQ/token.json"
+          chmod 600 "$HOME/.Garmin/ConnectIQ/token.json"
+          expires=$(jq -r '.refreshTokenExpiresIn' "$HOME/.Garmin/ConnectIQ/token.json")
+          left=$(( ($(date -d "$expires" +%s) - $(date +%s)) / 86400 ))
+          echo "Garmin login token expires $expires ($left days left)"
+          if [ "$left" -lt 0 ]; then
+            echo "::error::GARMIN_TOKEN expired on $expires. Run connect-iq-sdk-manager login and update the secret."
+            exit 1
+          elif [ "$left" -lt 14 ]; then
+            echo "::warning::GARMIN_TOKEN expires in $left days ($expires). Run connect-iq-sdk-manager login and update the secret."
+          fi
+
+      - name: Download SDK and device files
+        run: |
           connect-iq-sdk-manager agreement accept
-          connect-iq-sdk-manager login
           connect-iq-sdk-manager sdk set "$CIQ_SDK_VERSION"
           echo "$(connect-iq-sdk-manager sdk current-path --bin)" >> "$GITHUB_PATH"
           args=""
