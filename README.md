@@ -203,7 +203,7 @@ To sideload to a watch, copy the `.prg` to `GARMIN/APPS/` over USB.
 `.github/workflows/build.yml` builds with `-l 3` on every push to `main`, every pull request and on demand, for four profiles that cover the screen and font paths: `venu445mm` (AMOLED), `venu2` (AMOLED without Roboto), `fenix7` (MIP) and `fr255s` (MIP with the bundled bitmap label fonts). It downloads the SDK and device files with [connect-iq-sdk-manager](https://github.com/lindell/connect-iq-sdk-manager-cli), and signs with a throwaway key. The download needs a Garmin login token in the `GARMIN_TOKEN` repository secret:
 
 ```bash
-brew install lindell/connect-iq-sdk-manager-cli/connect-iq-sdk-manager
+brew install --cask lindell/connect-iq-sdk-manager-cli/connect-iq-sdk-manager-cli
 connect-iq-sdk-manager login      # opens Garmin sign-in in the browser; two-step verification works
 gh secret set GARMIN_TOKEN < ~/.Garmin/ConnectIQ/token.json
 ```
