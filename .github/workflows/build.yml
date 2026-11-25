@@ -24,9 +24,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # Semver constraint for the Connect IQ SDK; pin an exact version (e.g. 8.3.0)
-  # to match the SDK used locally if newer releases cause surprises.
-  CIQ_SDK_VERSION: ">=8.0.0"
+  # Connect IQ SDK and SDK-manager versions; bump deliberately.
+  CIQ_SDK_VERSION: "9.3.0"
+  CIQ_MANAGER_VERSION: v0.8.4
   # venu445mm   AMOLED, 454 px, the design target
   # venu2       AMOLED without Roboto fonts (system-font fallback)
   # fenix7      MIP, 64-color palette, Roboto Condensed only
@@ -50,7 +50,7 @@ jobs:
         run: |
           mkdir -p "$HOME/.local/bin"
           curl -fsSL https://raw.githubusercontent.com/lindell/connect-iq-sdk-manager-cli/master/install.sh \
-            | sh -s -- -b "$HOME/.local/bin"
+            | sh -s -- -b "$HOME/.local/bin" "$CIQ_MANAGER_VERSION"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Restore Garmin login token
