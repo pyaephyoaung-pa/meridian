@@ -16,7 +16,7 @@
 
     <!-- Gauges (settings) and the new register labels; units stay in English -->
     <string id="GaugesTitle">Indicadores</string>
-    <string id="GaugesHelp">Elige qué muestra cada indicador. En relojes con pantalla táctil, mantén pulsado un indicador para abrir la vista rápida de Garmin de ese dato. ENERGÍA es tu Body Battery (0–100), KCAL tus calorías y BRPM tus respiraciones por minuto. INTENSIDAD cuenta los minutos de intensidad de esta semana. -- significa que aún no hay lectura o que tu reloj no ofrece ese dato.</string>
+    <string id="GaugesHelp">Elige qué muestra cada indicador. En relojes con pantalla táctil, mantén pulsado un indicador para abrir la vista rápida de Garmin de ese dato. ENERGÍA es tu Body Battery (0–100), KCAL tus calorías y BRPM tus respiraciones por minuto. INTENSIDAD cuenta los minutos de intensidad de esta semana. ACTIVAS son las calorías de hoy por encima de tu gasto en reposo, estimadas a partir de tu perfil de usuario. La distancia, la altitud, la presión a nivel del mar y la temperatura siguen las unidades de tu reloj (presión en inHg con °F; si no, en hPa). TEMP es la temperatura exterior del tiempo de tu teléfono; el sensor de la muñeca mediría el calor corporal. -- significa que aún no hay lectura o que tu reloj no ofrece ese dato.</string>
     <string id="GaugeLeftTitle">Indicador izquierdo (las 9)</string>
     <string id="GaugeRightTitle">Indicador derecho (las 3)</string>
     <string id="GaugeBottomTitle">Indicador inferior (las 6)</string>
@@ -31,11 +31,18 @@
     <string id="MetricPulseOx">Pulsioxímetro</string>
     <string id="MetricRespiration">Respiración</string>
     <string id="MetricSleep">Puntuación de sueño</string>
+    <string id="MetricDistance">Distancia (hoy)</string>
+    <string id="MetricActiveCalories">Calorías activas</string>
+    <string id="MetricAltitude">Altitud</string>
+    <string id="MetricPressure">Presión barométrica</string>
+    <string id="MetricTemperature">Temperatura (tiempo)</string>
     <string id="LabelStress">ESTRÉS</string>
     <string id="LabelSteps">PASOS</string>
     <string id="LabelFloors">PISOS</string>
     <string id="LabelIntensity">INTENSIDAD</string>
     <string id="LabelSleep">SUEÑO</string>
+    <string id="LabelActiveCalories">ACTIVAS</string>
+    <string id="LabelTemperature">TEMP</string>
     <string id="LabelCalories">KCAL</string>
     <string id="LabelPulseOx">SPO2</string>
     <string id="LabelRespiration">BRPM</string>

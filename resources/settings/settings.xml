@@ -16,6 +16,11 @@
                 <listEntry value="8">@Strings.MetricPulseOx</listEntry>
                 <listEntry value="9">@Strings.MetricRespiration</listEntry>
                 <listEntry value="10">@Strings.MetricSleep</listEntry>
+                <listEntry value="11">@Strings.MetricDistance</listEntry>
+                <listEntry value="12">@Strings.MetricActiveCalories</listEntry>
+                <listEntry value="13">@Strings.MetricAltitude</listEntry>
+                <listEntry value="14">@Strings.MetricPressure</listEntry>
+                <listEntry value="15">@Strings.MetricTemperature</listEntry>
             </settingConfig>
         </setting>
         <setting propertyKey="@Properties.GaugeRight" title="@Strings.GaugeRightTitle">
@@ -31,6 +36,11 @@
                 <listEntry value="8">@Strings.MetricPulseOx</listEntry>
                 <listEntry value="9">@Strings.MetricRespiration</listEntry>
                 <listEntry value="10">@Strings.MetricSleep</listEntry>
+                <listEntry value="11">@Strings.MetricDistance</listEntry>
+                <listEntry value="12">@Strings.MetricActiveCalories</listEntry>
+                <listEntry value="13">@Strings.MetricAltitude</listEntry>
+                <listEntry value="14">@Strings.MetricPressure</listEntry>
+                <listEntry value="15">@Strings.MetricTemperature</listEntry>
             </settingConfig>
         </setting>
         <setting propertyKey="@Properties.GaugeBottom" title="@Strings.GaugeBottomTitle">
@@ -46,6 +56,11 @@
                 <listEntry value="8">@Strings.MetricPulseOx</listEntry>
                 <listEntry value="9">@Strings.MetricRespiration</listEntry>
                 <listEntry value="10">@Strings.MetricSleep</listEntry>
+                <listEntry value="11">@Strings.MetricDistance</listEntry>
+                <listEntry value="12">@Strings.MetricActiveCalories</listEntry>
+                <listEntry value="13">@Strings.MetricAltitude</listEntry>
+                <listEntry value="14">@Strings.MetricPressure</listEntry>
+                <listEntry value="15">@Strings.MetricTemperature</listEntry>
             </settingConfig>
         </setting>
     </group>

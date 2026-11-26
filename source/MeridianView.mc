@@ -9,7 +9,9 @@ import Toybox.SensorHistory;
 import Toybox.System;
 import Toybox.Time;
 import Toybox.Time.Gregorian;
+import Toybox.UserProfile;
 import Toybox.WatchUi;
+import Toybox.Weather;
 
 // Meridian — three-register analog face for Venu 4, date at 12.
 // Each register (9, 3 and 6 o'clock) shows a metric chosen in settings;
@@ -43,10 +45,15 @@ module Meridian {
     const M_PULSE_OX     = 8;
     const M_RESPIRATION  = 9;
     const M_SLEEP        = 10;
-    const METRIC_COUNT   = 11;
+    const M_DISTANCE     = 11;   // today, km or mi
+    const M_ACTIVE_CAL   = 12;   // today, total minus resting calories
+    const M_ALTITUDE     = 13;   // m or ft
+    const M_PRESSURE     = 14;   // sea-level pressure, hPa or inHg
+    const M_TEMPERATURE  = 15;   // outdoor (weather), °C or °F
+    const METRIC_COUNT   = 16;
 
     // Garmin complication per metric: press-and-hold opens its glance, and
-    // for some metrics it also pushes the live value
+    // for some metrics it also pushes the live value. null: no matching glance.
     const COMPLICATIONS = [
         Complications.COMPLICATION_TYPE_HEART_RATE,
         Complications.COMPLICATION_TYPE_BODY_BATTERY,
@@ -60,8 +67,13 @@ module Meridian {
         Complications.COMPLICATION_TYPE_RESPIRATION_RATE,
         // COMPLICATION_TYPE_SLEEP_SCORE (API 6.0.2) by value, so watches on
         // older firmware still build; there it isn't offered and shows "--"
-        42 as Complications.Type
-    ];
+        42 as Complications.Type,
+        null,                                            // distance: no glance of its own
+        Complications.COMPLICATION_TYPE_CALORIES,        // active calories: the Calories glance
+        Complications.COMPLICATION_TYPE_ALTITUDE,
+        Complications.COMPLICATION_TYPE_SEA_LEVEL_PRESSURE,
+        Complications.COMPLICATION_TYPE_CURRENT_TEMPERATURE
+    ] as Array<Complications.Type?>;
 
     // Shown instead of Body Battery on a watch that doesn't have it (the
     // right register's default): the first of these no other register shows
@@ -161,7 +173,12 @@ class MeridianView extends WatchUi.WatchFace {
         0xF0885A,  // calories: orange
         0xE87A9A,  // Pulse Ox: pink
         0x7DD3E8,  // respiration: aqua
-        0x8E9CF0   // sleep score: indigo
+        0x8E9CF0,  // sleep score: indigo
+        0x9ED36A,  // distance: lime
+        0xFF9F80,  // active calories: peach
+        0xD69A6B,  // altitude: copper
+        0xA4B8CC,  // pressure: steel
+        0xF07F7F   // temperature: coral
     ];
 
     // MIP screens (fēnix 7, fēnix 8 Solar, Enduro, Forerunner 255/955) show
@@ -181,7 +198,12 @@ class MeridianView extends WatchUi.WatchFace {
         0xFFAA55,  // calories: orange
         0xFF55AA,  // Pulse Ox: pink
         0x55FFFF,  // respiration: aqua
-        0x5555FF   // sleep score: indigo
+        0x5555FF,  // sleep score: indigo
+        0xAAFF55,  // distance: lime
+        0xFFAAAA,  // active calories: peach
+        0xAA5500,  // altitude: copper
+        0xAAFFFF,  // pressure: steel
+        0xFF5500   // temperature: coral
     ];
 
     // Icons per metric in a 24-unit viewBox, as drawing ops:
@@ -222,7 +244,21 @@ class MeridianView extends WatchUi.WatchFace {
         [[0.0, 20.7, 14.3, 19.8, 16.5, 18.4, 18.4, 16.5, 19.8, 14.3, 20.7, 12.0, 21.0, 9.7, 20.7,
           7.5, 19.8, 5.6, 18.4, 4.2, 16.5, 3.3, 14.3, 3.0, 12.0, 3.3, 9.7, 4.2, 7.5, 5.6, 5.6,
           7.5, 4.2, 9.7, 3.3, 9.8, 4.4, 9.0, 6.1, 8.8, 8.0, 9.0, 9.9, 9.8, 11.6, 10.9, 13.1,
-          12.4, 14.2, 14.1, 15.0, 16.0, 15.2, 17.9, 15.0, 19.6, 14.2]]
+          12.4, 14.2, 14.1, 15.0, 16.0, 15.2, 17.9, 15.0, 19.6, 14.2]],
+        // distance: winding route between two waypoints
+        [[2.0, 5.0, 19.0, 2.5], [2.0, 19.0, 5.0, 2.5],
+         [1.0, 7.5, 19.0, 14.0, 19.0, 17.0, 16.0, 14.0, 12.5, 10.0, 12.5, 7.0, 9.5, 10.0, 5.0, 16.5, 5.0]],
+        // active calories: smaller flame with a plus
+        [[0.0, 10.3, 5.6, 13.1, 9.6, 15.1, 13.2, 15.5, 16.4, 13.9, 20.0, 10.7, 22.0, 8.3, 22.0,
+          5.1, 20.0, 3.5, 16.8, 3.9, 13.6, 5.5, 10.4, 7.1, 14.4, 8.3, 10.4, 9.5, 8.0],
+         [1.0, 18.5, 2.5, 18.5, 9.5], [1.0, 15.0, 6.0, 22.0, 6.0]],
+        // altitude: two peaks
+        [[0.0, 1.5, 20.0, 8.5, 6.0, 12.5, 13.0, 15.5, 9.0, 22.5, 20.0]],
+        // pressure: barometer dial and needle
+        [[2.0, 12.0, 13.0, 8.5], [1.0, 12.0, 13.0, 16.0, 8.5], [1.0, 12.0, 2.5, 12.0, 4.5]],
+        // temperature: thermometer
+        [[1.0, 10.0, 14.5, 10.0, 5.0, 11.0, 3.5, 13.0, 3.5, 14.0, 5.0, 14.0, 14.5],
+         [2.0, 12.0, 17.5, 3.5], [1.0, 12.0, 17.5, 12.0, 9.0]]
     ];
 
     // Sword hands, design space, clockwise from the tip:
@@ -270,6 +306,18 @@ class MeridianView extends WatchUi.WatchFace {
 
     private const LOW_BATTERY = 20;      // percent, amber + "LOW" label at or below
     private const CALORIE_SCALE = 3000;  // kcal at a full calorie gauge (there is no calorie goal API)
+    // Full-gauge values for the metrics without a goal in the API
+    private const ACTIVE_CAL_SCALE = 1000;   // kcal
+    private const DISTANCE_SCALE_KM = 100;   // tenths: 10.0 km
+    private const DISTANCE_SCALE_MI = 60;    // tenths: 6.0 mi
+    private const ALTITUDE_SCALE_M  = 3000.0;
+    private const ALTITUDE_SCALE_FT = 10000.0;
+    private const PRESSURE_MIN_HPA  = 950.0;     // sea-level pressure gauge: 950-1050 hPa
+    private const TEMP_MIN_C        = -20.0;     // temperature gauge: -20-40 °C
+    private const FEET_PER_M   = 3.28084;
+    private const PA_PER_INHG  = 3386.39;
+    private const CM_PER_MI    = 160934.4;
+    private const WEATHER_MAX_AGE  = 3 * 3600;    // s, older weather counts as no reading
     // Oldest history sample shown when the live value is missing: Body Battery
     // and stress are sampled every few minutes; Pulse Ox mostly overnight, so
     // last night's reading still counts the next day
@@ -329,6 +377,13 @@ class MeridianView extends WatchUi.WatchFace {
     // watch language
     private var _labels as Array<String> = [] as Array<String>;
     private var _lblLow as String = "LOW";
+    // Device units (Settings > System > Units), re-read once a minute. The
+    // pressure unit follows the temperature unit (inHg with °F, hPa with °C):
+    // the API doesn't expose the barometer's own unit setting.
+    private var _unitsRead as Boolean = false;
+    private var _statuteDist as Boolean = false;
+    private var _statuteElev as Boolean = false;
+    private var _statuteTemp as Boolean = false;
     private var _decimalSep as String = ".";    // "12.3k" / "12,3k", from the watch language
 
     // Metric in each slot (left, right, bottom), from settings
@@ -370,10 +425,16 @@ class MeridianView extends WatchUi.WatchFace {
             WatchUi.loadResource(Rez.Strings.LabelCalories) as String,
             WatchUi.loadResource(Rez.Strings.LabelPulseOx) as String,
             WatchUi.loadResource(Rez.Strings.LabelRespiration) as String,
-            WatchUi.loadResource(Rez.Strings.LabelSleep) as String
+            WatchUi.loadResource(Rez.Strings.LabelSleep) as String,
+            "",   // distance, altitude and pressure: unit labels, see refreshUnits
+            WatchUi.loadResource(Rez.Strings.LabelActiveCalories) as String,
+            "",
+            "",
+            WatchUi.loadResource(Rez.Strings.LabelTemperature) as String
         ] as Array<String>;
         _lblLow = WatchUi.loadResource(Rez.Strings.LabelBatteryLow) as String;
         _decimalSep = WatchUi.loadResource(Rez.Strings.DecimalSeparator) as String;
+        refreshUnits();
         loadLabelFonts();
         _fontScale = readFontScale();
         if (Toybox has :Complications) {
@@ -521,6 +582,26 @@ class MeridianView extends WatchUi.WatchFace {
             s = ds.fontScale;
         }
         return (s < SCALE_MIN) ? SCALE_MIN : ((s > SCALE_MAX) ? SCALE_MAX : s);
+    }
+
+    // Unit labels follow the watch's unit settings; they are in the static
+    // layer, so a change redraws it
+    private function refreshUnits() as Void {
+        var ds = System.getDeviceSettings();
+        var d = ds.distanceUnits == System.UNIT_STATUTE;
+        var e = ds.elevationUnits == System.UNIT_STATUTE;
+        var t = ds.temperatureUnits == System.UNIT_STATUTE;
+        if (_unitsRead && d == _statuteDist && e == _statuteElev && t == _statuteTemp) {
+            return;
+        }
+        _unitsRead = true;
+        _statuteDist = d;
+        _statuteElev = e;
+        _statuteTemp = t;
+        _labels[Meridian.M_DISTANCE] = WatchUi.loadResource(d ? Rez.Strings.LabelMi : Rez.Strings.LabelKm) as String;
+        _labels[Meridian.M_ALTITUDE] = WatchUi.loadResource(e ? Rez.Strings.LabelFeet : Rez.Strings.LabelMeters) as String;
+        _labels[Meridian.M_PRESSURE] = WatchUi.loadResource(t ? Rez.Strings.LabelInHg : Rez.Strings.LabelHpa) as String;
+        _layerDirty = true;
     }
 
     // Forerunner 255 family (see monkey.jungle): Roboto Condensed bitmaps
@@ -778,6 +859,23 @@ class MeridianView extends WatchUi.WatchFace {
         }
         if (m == Meridian.M_RESPIRATION) {
             return v / 30.0;                      // 0-30 breaths per minute
+        }
+        if (m == Meridian.M_DISTANCE) {
+            return v.toFloat() / (_statuteDist ? DISTANCE_SCALE_MI : DISTANCE_SCALE_KM);
+        }
+        if (m == Meridian.M_ACTIVE_CAL) {
+            return v.toFloat() / ACTIVE_CAL_SCALE;
+        }
+        if (m == Meridian.M_ALTITUDE) {
+            return v / (_statuteElev ? ALTITUDE_SCALE_FT : ALTITUDE_SCALE_M);
+        }
+        if (m == Meridian.M_PRESSURE) {
+            var hpa = _statuteTemp ? v * PA_PER_INHG / 10000.0 : v.toFloat();
+            return (hpa - PRESSURE_MIN_HPA) / 100.0;
+        }
+        if (m == Meridian.M_TEMPERATURE) {
+            var c = _statuteTemp ? (v - 32) / 1.8 : v.toFloat();
+            return (c - TEMP_MIN_C) / 60.0;
         }
         return v / 100.0;                         // Body Battery, battery, stress, sleep score
     }
@@ -1178,6 +1276,7 @@ class MeridianView extends WatchUi.WatchFace {
             _stale = -1;
             refreshDate();
             refreshFontScale();
+            refreshUnits();
         }
 
         var info = null as ActivityMonitor.Info?;
@@ -1202,7 +1301,8 @@ class MeridianView extends WatchUi.WatchFace {
     // Counters read from ActivityMonitor.Info
     private function activityMetric(m as Number) as Boolean {
         return m == Meridian.M_STEPS || m == Meridian.M_FLOORS || m == Meridian.M_INTENSITY
-            || m == Meridian.M_CALORIES || m == Meridian.M_RESPIRATION;
+            || m == Meridian.M_CALORIES || m == Meridian.M_RESPIRATION
+            || m == Meridian.M_DISTANCE || m == Meridian.M_ACTIVE_CAL;
     }
 
     private function readMetric(m as Number, info as ActivityMonitor.Info?) as Number? {
@@ -1213,6 +1313,9 @@ class MeridianView extends WatchUi.WatchFace {
             var hr = liveHeartRate();
             return (hr != null) ? hr : history(m);
         }
+        if (m >= Meridian.M_DISTANCE) {
+            return unitMetric(m, info);
+        }
         if (info != null) {
             var a = activityValue(m, info);
             if (a != null && a >= 0) {
@@ -1221,6 +1324,147 @@ class MeridianView extends WatchUi.WatchFace {
         }
         var live = inRange(m, _live[m]);
         return (live != null) ? live : history(m);
+    }
+
+    // Distance, active calories and the sensors, in the watch's units:
+    // distance in tenths of a km or mi, pressure in hPa or hundredths of an
+    // inHg, temperature in whole degrees
+    private function unitMetric(m as Number, info as ActivityMonitor.Info?) as Number? {
+        if (m == Meridian.M_DISTANCE) {
+            var cm = (info != null) ? info.distance : null;
+            // Truncated, so "5.0" means 5 km are done
+            return (cm != null && cm >= 0) ? (cm * 10 / (_statuteDist ? CM_PER_MI : 100000.0)).toNumber() : null;
+        }
+        if (m == Meridian.M_ACTIVE_CAL) {
+            return activeCalories(info);
+        }
+        if (m == Meridian.M_ALTITUDE) {
+            var alt = altitudeMeters();
+            return (alt != null) ? round(_statuteElev ? alt * FEET_PER_M : alt) : null;
+        }
+        if (m == Meridian.M_PRESSURE) {
+            var pa = seaLevelPressure();
+            if (pa == null) {
+                return null;
+            }
+            return round(_statuteTemp ? pa * 100.0 / PA_PER_INHG : pa / 100.0);
+        }
+        if (m == Meridian.M_TEMPERATURE) {
+            var tenths = history(m);      // weather, °C x10
+            if (tenths == null) {
+                return null;
+            }
+            return round(_statuteTemp ? tenths * 0.18 + 32.0 : tenths / 10.0);
+        }
+        return null;
+    }
+
+    // Garmin counts resting calories through the day and adds active ones on
+    // top; the API only has the total, so this takes off the resting share so
+    // far (basal rate from the user profile, Mifflin-St Jeor). An estimate:
+    // it can differ from Garmin Connect's active calories by a few percent of
+    // the basal rate.
+    private function activeCalories(info as ActivityMonitor.Info?) as Number? {
+        var total = (info != null) ? info.calories : null;
+        var bmr = history(Meridian.M_ACTIVE_CAL);   // kcal a day, re-read once a minute
+        if (total == null || bmr == null) {
+            return null;
+        }
+        var clock = System.getClockTime();
+        var dayShare = (clock.hour * 60 + clock.min) / 1440.0;
+        var active = round(total - bmr * dayShare);
+        return (active > 0) ? active : 0;
+    }
+
+    private function restingKcalPerDay() as Number? {
+        var p = UserProfile.getProfile();
+        var w = p.weight;        // g
+        var h = p.height;        // cm
+        var born = p.birthYear;
+        if (w == null || h == null || born == null || w <= 0 || h <= 0) {
+            return null;
+        }
+        var year = Gregorian.info(Time.now(), Time.FORMAT_SHORT).year as Number;
+        var sex = p.gender;
+        var offset = (sex == UserProfile.GENDER_MALE) ? 5.0
+            : ((sex == UserProfile.GENDER_FEMALE) ? -161.0 : -78.0);
+        return round(w / 100.0 + 6.25 * h - 5.0 * (year - born) + offset);
+    }
+
+    // Barometric altitude: live while the barometer runs, else the newest
+    // elevation sample
+    private function altitudeMeters() as Float? {
+        var ai = Activity.getActivityInfo();
+        if (ai != null) {
+            var a = ai.altitude;
+            if (a != null) {
+                return a.toFloat();
+            }
+        }
+        var h = history(Meridian.M_ALTITUDE);
+        return (h != null) ? h.toFloat() : null;
+    }
+
+    // Sea-level pressure in Pa, as weather maps and the Barometer glance's
+    // sea-level view give it: the watch's own when it has one, else reduced
+    // from the ambient (station) pressure and altitude, standard atmosphere.
+    // A value outside 870-1085 hPa (the recorded extremes) is no reading.
+    private function seaLevelPressure() as Float? {
+        var ai = Activity.getActivityInfo();
+        if (ai != null) {
+            var slp = ai.meanSeaLevelPressure;
+            if (slp != null && slp > 0) {
+                return plausiblePressure(slp.toFloat());
+            }
+        }
+        var amb = ambientPressure(ai);
+        var alt = altitudeMeters();
+        if (amb == null || alt == null) {
+            return null;
+        }
+        return plausiblePressure((amb / Math.pow(1.0 - 2.25577e-5 * alt, 5.25588)).toFloat());
+    }
+
+    // Station pressure in Pa: live, else the newest barometer sample
+    private function ambientPressure(ai as Activity.Info?) as Float? {
+        if (ai != null) {
+            var ap = ai.ambientPressure;
+            if (ap != null && ap > 0) {
+                return ap.toFloat();
+            }
+        }
+        var hp = history(Meridian.M_PRESSURE);
+        return (hp != null && hp > 0) ? hp.toFloat() : null;
+    }
+
+    private function plausiblePressure(pa as Float) as Float? {
+        return (pa >= 87000.0 && pa <= 108500.0) ? pa : null;
+    }
+
+    // Outdoor temperature from the phone's weather, in tenths of a °C. The
+    // wrist sensor is not used: on the wrist it reads body heat, several
+    // degrees above the air.
+    private function weatherTemperature() as Number? {
+        if (!(Toybox has :Weather)) {
+            return null;
+        }
+        var cc = Weather.getCurrentConditions();
+        if (cc == null) {
+            return null;
+        }
+        var t = cc.temperature;
+        if (t == null) {
+            return null;
+        }
+        var when = cc.observationTime;
+        if (when != null && Time.now().value() - when.value() > WEATHER_MAX_AGE) {
+            return null;
+        }
+        return round(t * 10.0);
+    }
+
+    private function round(v as Numeric) as Number {
+        return Math.round(v).toNumber();
     }
 
     // A complication or history value outside the metric's range (a
@@ -1274,6 +1518,12 @@ class MeridianView extends WatchUi.WatchFace {
         if (m == Meridian.M_HEART_RATE) {
             return historyHeartRate();
         }
+        if (m == Meridian.M_ACTIVE_CAL) {
+            return restingKcalPerDay();
+        }
+        if (m == Meridian.M_TEMPERATURE) {
+            return weatherTemperature();
+        }
         if (!(Toybox has :SensorHistory)) {
             return null;
         }
@@ -1285,6 +1535,10 @@ class MeridianView extends WatchUi.WatchFace {
             v = newestSample(SensorHistory.getStressHistory(opts), HISTORY_MAX_AGE);
         } else if (m == Meridian.M_PULSE_OX && (SensorHistory has :getOxygenSaturationHistory)) {
             v = newestSample(SensorHistory.getOxygenSaturationHistory(opts), PULSE_OX_MAX_AGE);
+        } else if (m == Meridian.M_ALTITUDE && (SensorHistory has :getElevationHistory)) {
+            return newestSample(SensorHistory.getElevationHistory(opts), HISTORY_MAX_AGE);     // m
+        } else if (m == Meridian.M_PRESSURE && (SensorHistory has :getPressureHistory)) {
+            return newestSample(SensorHistory.getPressureHistory(opts), HISTORY_MAX_AGE);      // Pa, ambient
         }
         return inRange(m, v);
     }
@@ -1321,6 +1575,21 @@ class MeridianView extends WatchUi.WatchFace {
         var v = _val[m];
         if (v == null) {
             return "--";
+        }
+        if (m == Meridian.M_DISTANCE) {           // tenths: "5.2", from 100 "123"
+            return (v >= 1000) ? (v / 10).toString()
+                : (v / 10).toString() + _decimalSep + (v % 10).toString();
+        }
+        if (m == Meridian.M_TEMPERATURE) {
+            return v.toString() + "°";
+        }
+        if (m == Meridian.M_PRESSURE) {           // "1013" hPa, "29.92" inHg (else "29.9")
+            if (!_statuteTemp) {
+                return v.toString();
+            }
+            var whole = (v / 100).toString() + _decimalSep;
+            var full = whole + (v % 100).format("%02d");
+            return (dc.getTextWidthInPixels(full, font) <= maxW) ? full : whole + (v % 100 / 10).toString();
         }
         if (v < 1000) {
             return v.toString();

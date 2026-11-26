@@ -16,7 +16,7 @@
 
     <!-- Gauges (settings) and the new register labels; units stay in English -->
     <string id="GaugesTitle">Meters</string>
-    <string id="GaugesHelp">Kies wat elke meter toont. Op horloges met touchscreen houd je een meter ingedrukt om de Garmin-glance van die waarde te openen. ENERGIE is je Body Battery (0–100), KCAL je calorieën en BRPM je ademhalingen per minuut. INTENSITEIT telt de intensiteitsminuten van deze week. -- betekent dat er nog geen meting is, of dat je horloge die waarde niet biedt.</string>
+    <string id="GaugesHelp">Kies wat elke meter toont. Op horloges met touchscreen houd je een meter ingedrukt om de Garmin-glance van die waarde te openen. ENERGIE is je Body Battery (0–100), KCAL je calorieën en BRPM je ademhalingen per minuut. INTENSITEIT telt de intensiteitsminuten van deze week. ACTIEF zijn de calorieën van vandaag boven je rustverbruik, geschat uit je gebruikersprofiel. Afstand, hoogte, luchtdruk (op zeeniveau) en temperatuur volgen de eenheden van je horloge (luchtdruk in inHg bij °F, anders hPa). TEMP is de buitentemperatuur uit het weer van je telefoon; de polssensor zou lichaamswarmte meten. -- betekent dat er nog geen meting is, of dat je horloge die waarde niet biedt.</string>
     <string id="GaugeLeftTitle">Linkermeter (9 uur)</string>
     <string id="GaugeRightTitle">Rechtermeter (3 uur)</string>
     <string id="GaugeBottomTitle">Ondermeter (6 uur)</string>
@@ -31,11 +31,18 @@
     <string id="MetricPulseOx">Pulse Ox</string>
     <string id="MetricRespiration">Ademhaling</string>
     <string id="MetricSleep">Slaapscore</string>
+    <string id="MetricDistance">Afstand (vandaag)</string>
+    <string id="MetricActiveCalories">Actieve calorieën</string>
+    <string id="MetricAltitude">Hoogte</string>
+    <string id="MetricPressure">Luchtdruk</string>
+    <string id="MetricTemperature">Temperatuur (weer)</string>
     <string id="LabelStress">STRESS</string>
     <string id="LabelSteps">STAPPEN</string>
     <string id="LabelFloors">TRAPPEN</string>
     <string id="LabelIntensity">INTENSITEIT</string>
     <string id="LabelSleep">SLAAP</string>
+    <string id="LabelActiveCalories">ACTIEF</string>
+    <string id="LabelTemperature">TEMP</string>
     <string id="LabelCalories">KCAL</string>
     <string id="LabelPulseOx">SPO2</string>
     <string id="LabelRespiration">BRPM</string>
