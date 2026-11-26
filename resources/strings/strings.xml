@@ -3,7 +3,7 @@
 
     <!-- Settings (Garmin Connect) -->
     <string id="GaugesTitle">Gauges</string>
-    <string id="GaugesHelp">Choose what each gauge shows. On touchscreen watches, press and hold a gauge to open that metric's Garmin glance. ENERGY is your Body Battery (0–100), KCAL your calories and BRPM your breaths per minute. INTENSITY counts this week's intensity minutes. ACTIVE is today's calories beyond your resting burn, estimated from your user profile. Distance, altitude, sea-level pressure and temperature follow your watch's units (pressure in inHg with °F, else hPa). TEMP is the outdoor temperature from your phone's weather; the wrist sensor would read body heat. -- means there is no reading yet, or your watch doesn't offer that metric.</string>
+    <string id="GaugesHelp">Choose what each gauge shows. On touchscreen watches, press and hold a gauge to open that metric's Garmin glance. ENERGY is your Body Battery (0–100), KCAL your calories and BRPM your breaths per minute. INTENSITY counts this week's intensity minutes. ACTIVE is today's calories beyond your resting burn, estimated from your user profile. Distance, altitude, sea-level pressure and temperature follow your watch's units (pressure in inHg with °F, else hPa). TEMP is the outdoor temperature from your phone's weather; the wrist sensor would read body heat. RECOVERY counts the hours until you're fully recovered. VO2 max, training readiness and solar intensity come from your watch and show -- on watches that don't measure them. -- means there is no reading yet, or your watch doesn't offer that metric.</string>
     <string id="GaugeLeftTitle">Left gauge (9 o'clock)</string>
     <string id="GaugeRightTitle">Right gauge (3 o'clock)</string>
     <string id="GaugeBottomTitle">Bottom gauge (6 o'clock)</string>
@@ -23,6 +23,10 @@
     <string id="MetricAltitude">Altitude</string>
     <string id="MetricPressure">Barometric pressure</string>
     <string id="MetricTemperature">Temperature (weather)</string>
+    <string id="MetricVo2Max">VO2 max</string>
+    <string id="MetricRecovery">Recovery time</string>
+    <string id="MetricReadiness">Training readiness</string>
+    <string id="MetricSolar">Solar intensity</string>
 
     <string id="SettingsGroupTitle">Appearance</string>
     <string id="SettingsHelp">With the Ivory accent, the seconds hand stays champagne.</string>
@@ -52,6 +56,11 @@
     <string id="LabelSleep">SLEEP</string>
     <string id="LabelActiveCalories">ACTIVE</string>
     <string id="LabelTemperature">TEMP</string>
+    <string id="LabelRecovery">RECOVERY</string>
+    <string id="LabelReadiness">READINESS</string>
+    <string id="LabelSolar">SOLAR</string>
+    <!-- VO2MAX stays in English, like BPM -->
+    <string id="LabelVo2Max">VO2MAX</string>
     <!-- Unit labels for distance, altitude and pressure, picked by the
          watch's unit settings. English only (like BPM), so not translated. -->
     <string id="LabelKm">KM</string>

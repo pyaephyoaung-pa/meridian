@@ -16,7 +16,7 @@
 
     <!-- Gauges (settings) and the new register labels; units stay in English -->
     <string id="GaugesTitle">Anzeigen</string>
-    <string id="GaugesHelp">Wähle, was jede Anzeige zeigt. Auf Uhren mit Touchscreen hältst du eine Anzeige gedrückt, um den Garmin-Glance dieses Werts zu öffnen. ENERGIE ist deine Body Battery (0–100), KCAL deine Kalorien und BRPM deine Atemzüge pro Minute. INTENSITÄT zählt die Intensitätsminuten dieser Woche. AKTIV sind die heutigen Kalorien über deinem Ruheverbrauch, geschätzt aus deinem Benutzerprofil. Distanz, Höhe, Luftdruck (auf Meereshöhe) und Temperatur folgen den Einheiten deiner Uhr (Luftdruck in inHg bei °F, sonst hPa). TEMP ist die Außentemperatur aus dem Wetter deines Telefons; der Sensor am Handgelenk würde Körperwärme messen. -- bedeutet, dass noch kein Messwert vorliegt oder deine Uhr diesen Wert nicht anbietet.</string>
+    <string id="GaugesHelp">Wähle, was jede Anzeige zeigt. Auf Uhren mit Touchscreen hältst du eine Anzeige gedrückt, um den Garmin-Glance dieses Werts zu öffnen. ENERGIE ist deine Body Battery (0–100), KCAL deine Kalorien und BRPM deine Atemzüge pro Minute. INTENSITÄT zählt die Intensitätsminuten dieser Woche. AKTIV sind die heutigen Kalorien über deinem Ruheverbrauch, geschätzt aus deinem Benutzerprofil. Distanz, Höhe, Luftdruck (auf Meereshöhe) und Temperatur folgen den Einheiten deiner Uhr (Luftdruck in inHg bei °F, sonst hPa). TEMP ist die Außentemperatur aus dem Wetter deines Telefons; der Sensor am Handgelenk würde Körperwärme messen. ERHOLUNG zählt die Stunden bis zur vollständigen Erholung. VO2max, Trainingsbereitschaft und Solarintensität kommen von deiner Uhr und zeigen -- auf Uhren, die sie nicht messen. -- bedeutet, dass noch kein Messwert vorliegt oder deine Uhr diesen Wert nicht anbietet.</string>
     <string id="GaugeLeftTitle">Linke Anzeige (9 Uhr)</string>
     <string id="GaugeRightTitle">Rechte Anzeige (3 Uhr)</string>
     <string id="GaugeBottomTitle">Untere Anzeige (6 Uhr)</string>
@@ -36,6 +36,10 @@
     <string id="MetricAltitude">Höhe</string>
     <string id="MetricPressure">Luftdruck</string>
     <string id="MetricTemperature">Temperatur (Wetter)</string>
+    <string id="MetricVo2Max">VO2max</string>
+    <string id="MetricRecovery">Erholungszeit</string>
+    <string id="MetricReadiness">Trainingsbereitschaft</string>
+    <string id="MetricSolar">Solarintensität</string>
     <string id="LabelStress">STRESS</string>
     <string id="LabelSteps">SCHRITTE</string>
     <string id="LabelFloors">ETAGEN</string>
@@ -43,6 +47,9 @@
     <string id="LabelSleep">SCHLAF</string>
     <string id="LabelActiveCalories">AKTIV</string>
     <string id="LabelTemperature">TEMP</string>
+    <string id="LabelRecovery">ERHOLUNG</string>
+    <string id="LabelReadiness">BEREIT</string>
+    <string id="LabelSolar">SOLAR</string>
     <string id="LabelCalories">KCAL</string>
     <string id="LabelPulseOx">SPO2</string>
     <string id="LabelRespiration">BRPM</string>

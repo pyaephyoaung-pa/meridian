@@ -50,7 +50,11 @@ module Meridian {
     const M_ALTITUDE     = 13;   // m or ft
     const M_PRESSURE     = 14;   // sea-level pressure, hPa or inHg
     const M_TEMPERATURE  = 15;   // outdoor (weather), °C or °F
-    const METRIC_COUNT   = 16;
+    const M_VO2MAX       = 16;   // running VO2 max, ml/kg/min
+    const M_RECOVERY     = 17;   // recovery time, hours
+    const M_READINESS    = 18;   // training readiness, 0-100
+    const M_SOLAR        = 19;   // solar intensity, 0-100%
+    const METRIC_COUNT   = 20;
 
     // Garmin complication per metric: press-and-hold opens its glance, and
     // for some metrics it also pushes the live value. null: no matching glance.
@@ -72,7 +76,11 @@ module Meridian {
         Complications.COMPLICATION_TYPE_CALORIES,        // active calories: the Calories glance
         Complications.COMPLICATION_TYPE_ALTITUDE,
         Complications.COMPLICATION_TYPE_SEA_LEVEL_PRESSURE,
-        Complications.COMPLICATION_TYPE_CURRENT_TEMPERATURE
+        Complications.COMPLICATION_TYPE_CURRENT_TEMPERATURE,
+        Complications.COMPLICATION_TYPE_VO2MAX_RUN,
+        Complications.COMPLICATION_TYPE_RECOVERY_TIME,
+        Complications.COMPLICATION_TYPE_TRAINING_READINESS,
+        Complications.COMPLICATION_TYPE_SOLAR_INPUT
     ] as Array<Complications.Type?>;
 
     // Shown instead of Body Battery on a watch that doesn't have it (the
@@ -178,7 +186,11 @@ class MeridianView extends WatchUi.WatchFace {
         0xFF9F80,  // active calories: peach
         0xD69A6B,  // altitude: copper
         0xA4B8CC,  // pressure: steel
-        0xF07F7F   // temperature: coral
+        0xF07F7F,  // temperature: coral
+        0x66D9C2,  // VO2 max: mint
+        0xC48FE0,  // recovery time: orchid
+        0x8FD18F,  // training readiness: green
+        0xFFD24D   // solar intensity: sun yellow
     ];
 
     // MIP screens (fēnix 7, fēnix 8 Solar, Enduro, Forerunner 255/955) show
@@ -203,7 +215,11 @@ class MeridianView extends WatchUi.WatchFace {
         0xFFAAAA,  // active calories: peach
         0xAA5500,  // altitude: copper
         0xAAFFFF,  // pressure: steel
-        0xFF5500   // temperature: coral
+        0xFF5500,  // temperature: coral
+        0x55FFAA,  // VO2 max: mint
+        0xAA55FF,  // recovery time: orchid
+        0xAAFFAA,  // training readiness: green
+        0xFFFF00   // solar intensity: sun yellow
     ];
 
     // Icons per metric in a 24-unit viewBox, as drawing ops:
@@ -258,7 +274,22 @@ class MeridianView extends WatchUi.WatchFace {
         [[2.0, 12.0, 13.0, 8.5], [1.0, 12.0, 13.0, 16.0, 8.5], [1.0, 12.0, 2.5, 12.0, 4.5]],
         // temperature: thermometer
         [[1.0, 10.0, 14.5, 10.0, 5.0, 11.0, 3.5, 13.0, 3.5, 14.0, 5.0, 14.0, 14.5],
-         [2.0, 12.0, 17.5, 3.5], [1.0, 12.0, 17.5, 12.0, 9.0]]
+         [2.0, 12.0, 17.5, 3.5], [1.0, 12.0, 17.5, 12.0, 9.0]],
+        // VO2 max: lungs and windpipe
+        [[0.0, 10.5, 8.0, 10.5, 19.5, 8.5, 21.0, 4.5, 21.0, 3.0, 19.0, 3.5, 13.0, 6.0, 8.5, 8.5, 7.0],
+         [0.0, 13.5, 8.0, 15.5, 7.0, 18.0, 8.5, 20.5, 13.0, 21.0, 19.0, 19.5, 21.0, 15.5, 21.0, 13.5, 19.5],
+         [1.0, 12.0, 2.5, 12.0, 10.0]],
+        // recovery time: hourglass
+        [[0.0, 6.0, 2.5, 18.0, 2.5, 18.0, 4.5, 13.5, 12.0, 18.0, 19.5, 18.0, 21.5, 6.0, 21.5,
+          6.0, 19.5, 10.5, 12.0, 6.0, 4.5]],
+        // training readiness: dial on a half arc, needle up-right
+        [[1.0, 3.0, 17.0, 3.7, 13.4, 5.6, 10.1, 8.5, 7.7, 12.0, 6.5, 15.5, 7.7, 18.4, 10.1,
+          20.3, 13.4, 21.0, 17.0], [1.0, 12.0, 17.0, 16.5, 10.5], [2.0, 12.0, 17.0, 1.5]],
+        // solar intensity: sun
+        [[2.0, 12.0, 12.0, 4.0], [1.0, 12.0, 2.0, 12.0, 4.5], [1.0, 12.0, 19.5, 12.0, 22.0],
+         [1.0, 2.0, 12.0, 4.5, 12.0], [1.0, 19.5, 12.0, 22.0, 12.0],
+         [1.0, 4.9, 4.9, 6.7, 6.7], [1.0, 17.3, 17.3, 19.1, 19.1],
+         [1.0, 4.9, 19.1, 6.7, 17.3], [1.0, 17.3, 6.7, 19.1, 4.9]]
     ];
 
     // Sword hands, design space, clockwise from the tip:
@@ -430,7 +461,11 @@ class MeridianView extends WatchUi.WatchFace {
             WatchUi.loadResource(Rez.Strings.LabelActiveCalories) as String,
             "",
             "",
-            WatchUi.loadResource(Rez.Strings.LabelTemperature) as String
+            WatchUi.loadResource(Rez.Strings.LabelTemperature) as String,
+            WatchUi.loadResource(Rez.Strings.LabelVo2Max) as String,
+            WatchUi.loadResource(Rez.Strings.LabelRecovery) as String,
+            WatchUi.loadResource(Rez.Strings.LabelReadiness) as String,
+            WatchUi.loadResource(Rez.Strings.LabelSolar) as String
         ] as Array<String>;
         _lblLow = WatchUi.loadResource(Rez.Strings.LabelBatteryLow) as String;
         _decimalSep = WatchUi.loadResource(Rez.Strings.DecimalSeparator) as String;
@@ -534,7 +569,8 @@ class MeridianView extends WatchUi.WatchFace {
     // battery are read directly; the activity counters from ActivityMonitor.
     private function pushedMetric(m as Number) as Boolean {
         return m == Meridian.M_BODY_BATTERY || m == Meridian.M_STRESS || m == Meridian.M_PULSE_OX
-            || m == Meridian.M_RESPIRATION || m == Meridian.M_SLEEP;
+            || m == Meridian.M_RESPIRATION || m == Meridian.M_SLEEP
+            || m >= Meridian.M_VO2MAX;
     }
 
     function onLayout(dc as Dc) as Void {
@@ -876,6 +912,12 @@ class MeridianView extends WatchUi.WatchFace {
         if (m == Meridian.M_TEMPERATURE) {
             var c = _statuteTemp ? (v - 32) / 1.8 : v.toFloat();
             return (c - TEMP_MIN_C) / 60.0;
+        }
+        if (m == Meridian.M_VO2MAX) {
+            return (v - 20) / 50.0;               // 20-70 ml/kg/min
+        }
+        if (m == Meridian.M_RECOVERY) {
+            return v / 96.0;                      // 0-96 h, Garmin's longest
         }
         return v / 100.0;                         // Body Battery, battery, stress, sleep score
     }
@@ -1302,7 +1344,7 @@ class MeridianView extends WatchUi.WatchFace {
     private function activityMetric(m as Number) as Boolean {
         return m == Meridian.M_STEPS || m == Meridian.M_FLOORS || m == Meridian.M_INTENSITY
             || m == Meridian.M_CALORIES || m == Meridian.M_RESPIRATION
-            || m == Meridian.M_DISTANCE || m == Meridian.M_ACTIVE_CAL;
+            || m == Meridian.M_DISTANCE || m == Meridian.M_ACTIVE_CAL || m == Meridian.M_RECOVERY;
     }
 
     private function readMetric(m as Number, info as ActivityMonitor.Info?) as Number? {
@@ -1326,9 +1368,10 @@ class MeridianView extends WatchUi.WatchFace {
         return (live != null) ? live : history(m);
     }
 
-    // Distance, active calories and the sensors, in the watch's units:
-    // distance in tenths of a km or mi, pressure in hPa or hundredths of an
-    // inHg, temperature in whole degrees
+    // Metrics 11 and up. Distance, active calories and the sensors are in the
+    // watch's units: distance in tenths of a km or mi, pressure in hPa or
+    // hundredths of an inHg, temperature in whole degrees. Then the metrics
+    // from the Complications API, each "--" where the watch doesn't publish it.
     private function unitMetric(m as Number, info as ActivityMonitor.Info?) as Number? {
         if (m == Meridian.M_DISTANCE) {
             var cm = (info != null) ? info.distance : null;
@@ -1356,7 +1399,37 @@ class MeridianView extends WatchUi.WatchFace {
             }
             return round(_statuteTemp ? tenths * 0.18 + 32.0 : tenths / 10.0);
         }
-        return null;
+        if (m == Meridian.M_VO2MAX) {
+            var vo2 = _live[m];
+            if (vo2 == null) {                    // profile value, updated after runs
+                var p = UserProfile.getProfile();
+                vo2 = (p has :vo2maxRunning) ? p.vo2maxRunning : null;
+            }
+            return (vo2 != null && vo2 >= 10 && vo2 <= 100) ? vo2 : null;
+        }
+        if (m == Meridian.M_RECOVERY) {
+            if (info != null && (info has :timeToRecovery)) {
+                var h = info.timeToRecovery;      // hours
+                if (h != null && h >= 0) {
+                    return h;
+                }
+            }
+            var min = _live[m];                   // complication: minutes
+            return (min != null && min >= 0) ? (min + 59) / 60 : null;
+        }
+        if (m == Meridian.M_SOLAR) {
+            var stats = System.getSystemStats();
+            if (stats has :solarIntensity) {
+                var si = stats.solarIntensity;
+                if (si != null && si >= 0 && si <= 100) {
+                    return si;
+                }
+            }
+        }
+        // Training readiness, and solar intensity on firmware without the
+        // system value: the complication only; "--" where it isn't published
+        var c = _live[m];
+        return (c != null && c >= 0 && c <= 100) ? c : null;
     }
 
     // Garmin counts resting calories through the day and adds active ones on
@@ -1582,6 +1655,9 @@ class MeridianView extends WatchUi.WatchFace {
         }
         if (m == Meridian.M_TEMPERATURE) {
             return v.toString() + "°";
+        }
+        if (m == Meridian.M_RECOVERY) {
+            return v.toString() + "h";
         }
         if (m == Meridian.M_PRESSURE) {           // "1013" hPa, "29.92" inHg (else "29.9")
             if (!_statuteTemp) {
