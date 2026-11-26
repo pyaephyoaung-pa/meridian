@@ -16,7 +16,7 @@
 
     <!-- Gauges (settings) and the new register labels; units stay in English -->
     <string id="GaugesTitle">Jauges</string>
-    <string id="GaugesHelp">Choisissez ce qu'affiche chaque jauge. Sur les montres tactiles, maintenez une jauge appuyée pour ouvrir l'aperçu Garmin de cette donnée. ÉNERGIE correspond à votre Body Battery (0 à 100), KCAL à vos calories et BRPM à vos respirations par minute. INTENSITÉ compte les minutes intensives de la semaine. -- signifie qu'il n'y a pas encore de mesure ou que votre montre ne propose pas cette donnée.</string>
+    <string id="GaugesHelp">Choisissez ce qu'affiche chaque jauge. Sur les montres tactiles, maintenez une jauge appuyée pour ouvrir l'aperçu Garmin de cette donnée. ÉNERGIE correspond à votre Body Battery (0 à 100), KCAL à vos calories et BRPM à vos respirations par minute. INTENSITÉ compte les minutes intensives de la semaine. ACTIVES correspond aux calories du jour au-delà de votre dépense au repos, estimées à partir de votre profil utilisateur. La distance, l'altitude, la pression au niveau de la mer et la température suivent les unités de votre montre (pression en inHg avec les °F, sinon en hPa). TEMP est la température extérieure de la météo de votre téléphone ; le capteur au poignet mesurerait la chaleur du corps. RÉCUP compte les heures jusqu'à votre récupération complète. La VO2 max et l'intensité solaire viennent de votre montre et affichent -- sur les montres qui ne les mesurent pas. -- signifie qu'il n'y a pas encore de mesure ou que votre montre ne propose pas cette donnée.</string>
     <string id="GaugeLeftTitle">Jauge gauche (9 h)</string>
     <string id="GaugeRightTitle">Jauge droite (3 h)</string>
     <string id="GaugeBottomTitle">Jauge du bas (6 h)</string>
@@ -31,11 +31,31 @@
     <string id="MetricPulseOx">Oxymètre de pouls</string>
     <string id="MetricRespiration">Respiration</string>
     <string id="MetricSleep">Score de sommeil</string>
+    <string id="MetricDistance">Distance (aujourd'hui)</string>
+    <string id="MetricActiveCalories">Calories actives</string>
+    <string id="MetricAltitude">Altitude</string>
+    <string id="MetricPressure">Pression barométrique</string>
+    <string id="MetricTemperature">Température (météo)</string>
+    <string id="MetricVo2Max">VO2 max</string>
+    <string id="MetricRecovery">Temps de récupération</string>
+    <string id="MetricSolar">Intensité solaire</string>
     <string id="LabelStress">STRESS</string>
     <string id="LabelSteps">PAS</string>
     <string id="LabelFloors">ÉTAGES</string>
     <string id="LabelIntensity">INTENSITÉ</string>
     <string id="LabelSleep">SOMMEIL</string>
+    <string id="LabelActiveCalories">ACTIVES</string>
+    <string id="LabelTemperature">TEMP</string>
+    <string id="LabelRecovery">RÉCUP</string>
+    <string id="LabelSolar">SOLAIRE</string>
+    <!-- Unit labels stay in English -->
+    <string id="LabelKm">KM</string>
+    <string id="LabelMi">MI</string>
+    <string id="LabelMeters">M</string>
+    <string id="LabelFeet">FT</string>
+    <string id="LabelHpa">HPA</string>
+    <string id="LabelInHg">INHG</string>
+    <string id="LabelVo2Max">VO2MAX</string>
     <string id="LabelCalories">KCAL</string>
     <string id="LabelPulseOx">SPO2</string>
     <string id="LabelRespiration">BRPM</string>

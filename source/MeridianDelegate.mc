@@ -22,12 +22,13 @@ class MeridianDelegate extends WatchUi.WatchFaceDelegate {
         var type = null as Complications.Type?;
         for (var i = 0; i < 3; i++) {
             if (inside(xy, (Meridian.SLOT_X[i] as Float) * k, (Meridian.SLOT_Y[i] as Float) * k, hit)) {
-                type = Meridian.COMPLICATIONS[Meridian.slotMetric(i)] as Complications.Type;
+                type = Meridian.COMPLICATIONS[Meridian.slotMetric(i)] as Complications.Type?;
                 break;
             }
         }
 
-        // Not on a register, or the watch doesn't offer that metric's glance
+        // Not on a register, a metric without a glance (distance), or the
+        // watch doesn't offer that metric's glance
         if (type == null) {
             return false;
         }
