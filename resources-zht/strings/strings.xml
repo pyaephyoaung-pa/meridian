@@ -16,7 +16,7 @@
 
     <!-- Gauges (settings) and the new register labels; units stay in English -->
     <string id="GaugesTitle">儀表</string>
-    <string id="GaugesHelp">選擇每個儀表顯示的內容。在觸控螢幕手錶上，長按儀表可開啟該項目的 Garmin 概覽。「能量」即 Body Battery（0–100），KCAL 為卡路里，BRPM 為每分鐘呼吸次數。「強度」為本週的強度活動分鐘數。「活動」為今天超出靜息消耗的卡路里，根據你的使用者資料估算。距離、海拔、海平面氣壓和氣溫採用手錶的單位設定（選擇°F時氣壓以 inHg 顯示，否則為 hPa）。「氣溫」為手機天氣提供的戶外溫度（手腕感測器會受體溫影響）。「恢復」為完全恢復前剩餘的小時數。最大攝氧量、訓練準備度和太陽能強度來自手錶，不支援測量的手錶顯示「--」。「--」表示尚無讀數，或手錶不支援該項目。</string>
+    <string id="GaugesHelp">選擇每個儀表顯示的內容。在觸控螢幕手錶上，長按儀表可開啟該項目的 Garmin 概覽。「能量」即 Body Battery（0–100），KCAL 為卡路里，BRPM 為每分鐘呼吸次數。「強度」為本週的強度活動分鐘數。「活動」為今天超出靜息消耗的卡路里，根據你的使用者資料估算。距離、海拔、海平面氣壓和氣溫採用手錶的單位設定（選擇°F時氣壓以 inHg 顯示，否則為 hPa）。「氣溫」為手機天氣提供的戶外溫度（手腕感測器會受體溫影響）。「恢復」為完全恢復前剩餘的小時數。最大攝氧量和太陽能強度來自手錶，不支援測量的手錶顯示「--」。「--」表示尚無讀數，或手錶不支援該項目。</string>
     <string id="GaugeLeftTitle">左側儀表（9 點）</string>
     <string id="GaugeRightTitle">右側儀表（3 點）</string>
     <string id="GaugeBottomTitle">下方儀表（6 點）</string>
@@ -38,7 +38,6 @@
     <string id="MetricTemperature">氣溫（天氣）</string>
     <string id="MetricVo2Max">最大攝氧量</string>
     <string id="MetricRecovery">恢復時間</string>
-    <string id="MetricReadiness">訓練準備度</string>
     <string id="MetricSolar">太陽能強度</string>
     <string id="LabelStress">壓力</string>
     <string id="LabelSteps">步數</string>
@@ -48,8 +47,15 @@
     <string id="LabelActiveCalories">活動</string>
     <string id="LabelTemperature">氣溫</string>
     <string id="LabelRecovery">恢復</string>
-    <string id="LabelReadiness">準備</string>
     <string id="LabelSolar">太陽能</string>
+    <!-- Unit labels stay in English -->
+    <string id="LabelKm">KM</string>
+    <string id="LabelMi">MI</string>
+    <string id="LabelMeters">M</string>
+    <string id="LabelFeet">FT</string>
+    <string id="LabelHpa">HPA</string>
+    <string id="LabelInHg">INHG</string>
+    <string id="LabelVo2Max">VO2MAX</string>
     <string id="LabelCalories">KCAL</string>
     <string id="LabelPulseOx">SPO2</string>
     <string id="LabelRespiration">BRPM</string>

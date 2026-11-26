@@ -16,7 +16,7 @@
 
     <!-- Gauges (settings) and the new register labels; units stay in English -->
     <string id="GaugesTitle">Indicatori</string>
-    <string id="GaugesHelp">Scegli cosa mostra ciascun indicatore. Sugli orologi touchscreen, tieni premuto un indicatore per aprire l'anteprima Garmin di quel dato. ENERGIA è la tua Body Battery (0–100), KCAL le tue calorie e BRPM i tuoi respiri al minuto. INTENSITÀ conta i minuti di intensità di questa settimana. ATTIVE sono le calorie di oggi oltre il consumo a riposo, stimate dal tuo profilo utente. Distanza, altitudine, pressione a livello del mare e temperatura seguono le unità dell'orologio (pressione in inHg con i °F, altrimenti in hPa). TEMP è la temperatura esterna dal meteo del telefono; il sensore al polso misurerebbe il calore del corpo. RECUPERO conta le ore che mancano al recupero completo. VO2 max, predisposizione all'allenamento e intensità solare provengono dall'orologio e mostrano -- sugli orologi che non li misurano. -- significa che non c'è ancora una misurazione o che il tuo orologio non offre quel dato.</string>
+    <string id="GaugesHelp">Scegli cosa mostra ciascun indicatore. Sugli orologi touchscreen, tieni premuto un indicatore per aprire l'anteprima Garmin di quel dato. ENERGIA è la tua Body Battery (0–100), KCAL le tue calorie e BRPM i tuoi respiri al minuto. INTENSITÀ conta i minuti di intensità di questa settimana. ATTIVE sono le calorie di oggi oltre il consumo a riposo, stimate dal tuo profilo utente. Distanza, altitudine, pressione a livello del mare e temperatura seguono le unità dell'orologio (pressione in inHg con i °F, altrimenti in hPa). TEMP è la temperatura esterna dal meteo del telefono; il sensore al polso misurerebbe il calore del corpo. RECUPERO conta le ore che mancano al recupero completo. VO2 max e intensità solare provengono dall'orologio e mostrano -- sugli orologi che non li misurano. -- significa che non c'è ancora una misurazione o che il tuo orologio non offre quel dato.</string>
     <string id="GaugeLeftTitle">Indicatore sinistro (ore 9)</string>
     <string id="GaugeRightTitle">Indicatore destro (ore 3)</string>
     <string id="GaugeBottomTitle">Indicatore in basso (ore 6)</string>
@@ -38,7 +38,6 @@
     <string id="MetricTemperature">Temperatura (meteo)</string>
     <string id="MetricVo2Max">VO2 max</string>
     <string id="MetricRecovery">Tempo di recupero</string>
-    <string id="MetricReadiness">Predisposizione all'allenamento</string>
     <string id="MetricSolar">Intensità solare</string>
     <string id="LabelStress">STRESS</string>
     <string id="LabelSteps">PASSI</string>
@@ -48,8 +47,15 @@
     <string id="LabelActiveCalories">ATTIVE</string>
     <string id="LabelTemperature">TEMP</string>
     <string id="LabelRecovery">RECUPERO</string>
-    <string id="LabelReadiness">PRONTO</string>
     <string id="LabelSolar">SOLARE</string>
+    <!-- Unit labels stay in English -->
+    <string id="LabelKm">KM</string>
+    <string id="LabelMi">MI</string>
+    <string id="LabelMeters">M</string>
+    <string id="LabelFeet">FT</string>
+    <string id="LabelHpa">HPA</string>
+    <string id="LabelInHg">INHG</string>
+    <string id="LabelVo2Max">VO2MAX</string>
     <string id="LabelCalories">KCAL</string>
     <string id="LabelPulseOx">SPO2</string>
     <string id="LabelRespiration">BRPM</string>

@@ -23,8 +23,7 @@
                 <listEntry value="15">@Strings.MetricTemperature</listEntry>
                 <listEntry value="16">@Strings.MetricVo2Max</listEntry>
                 <listEntry value="17">@Strings.MetricRecovery</listEntry>
-                <listEntry value="18">@Strings.MetricReadiness</listEntry>
-                <listEntry value="19">@Strings.MetricSolar</listEntry>
+                <listEntry value="18">@Strings.MetricSolar</listEntry>
             </settingConfig>
         </setting>
         <setting propertyKey="@Properties.GaugeRight" title="@Strings.GaugeRightTitle">
@@ -47,8 +46,7 @@
                 <listEntry value="15">@Strings.MetricTemperature</listEntry>
                 <listEntry value="16">@Strings.MetricVo2Max</listEntry>
                 <listEntry value="17">@Strings.MetricRecovery</listEntry>
-                <listEntry value="18">@Strings.MetricReadiness</listEntry>
-                <listEntry value="19">@Strings.MetricSolar</listEntry>
+                <listEntry value="18">@Strings.MetricSolar</listEntry>
             </settingConfig>
         </setting>
         <setting propertyKey="@Properties.GaugeBottom" title="@Strings.GaugeBottomTitle">
@@ -71,8 +69,7 @@
                 <listEntry value="15">@Strings.MetricTemperature</listEntry>
                 <listEntry value="16">@Strings.MetricVo2Max</listEntry>
                 <listEntry value="17">@Strings.MetricRecovery</listEntry>
-                <listEntry value="18">@Strings.MetricReadiness</listEntry>
-                <listEntry value="19">@Strings.MetricSolar</listEntry>
+                <listEntry value="18">@Strings.MetricSolar</listEntry>
             </settingConfig>
         </setting>
     </group>

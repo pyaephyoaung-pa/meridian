@@ -2,7 +2,7 @@
     <property id="AccentColor" type="number">0</property>
     <property id="ShowSeconds" type="boolean">true</property>
     <!-- Metric per register; values are Meridian.M_* (0 heart rate,
-         1 Body Battery, 2 watch battery, ... 19 solar intensity; see MeridianView.mc) -->
+         1 Body Battery, 2 watch battery, ... 18 solar intensity; see MeridianView.mc) -->
     <property id="GaugeLeft" type="number">0</property>
     <property id="GaugeRight" type="number">1</property>
     <property id="GaugeBottom" type="number">2</property>

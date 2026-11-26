@@ -16,7 +16,7 @@
 
     <!-- Gauges (settings) and the new register labels; units stay in English -->
     <string id="GaugesTitle">仪表</string>
-    <string id="GaugesHelp">选择每个仪表显示的内容。在触摸屏手表上，长按仪表可打开该项目的 Garmin 概览。“能量”即 Body Battery（0–100），KCAL 为卡路里，BRPM 为每分钟呼吸次数。“强度”为本周的强度活动分钟数。“活动”为今天超出静息消耗的卡路里，根据你的用户资料估算。距离、海拔、海平面气压和气温采用手表的单位设置（选择°F时气压以 inHg 显示，否则为 hPa）。“气温”为手机天气提供的室外温度（手腕传感器会受体温影响）。“恢复”为完全恢复前剩余的小时数。最大摄氧量、训练准备度和太阳能强度来自手表，不支持测量的手表显示“--”。“--”表示暂无读数，或手表不支持该项目。</string>
+    <string id="GaugesHelp">选择每个仪表显示的内容。在触摸屏手表上，长按仪表可打开该项目的 Garmin 概览。“能量”即 Body Battery（0–100），KCAL 为卡路里，BRPM 为每分钟呼吸次数。“强度”为本周的强度活动分钟数。“活动”为今天超出静息消耗的卡路里，根据你的用户资料估算。距离、海拔、海平面气压和气温采用手表的单位设置（选择°F时气压以 inHg 显示，否则为 hPa）。“气温”为手机天气提供的室外温度（手腕传感器会受体温影响）。“恢复”为完全恢复前剩余的小时数。最大摄氧量和太阳能强度来自手表，不支持测量的手表显示“--”。“--”表示暂无读数，或手表不支持该项目。</string>
     <string id="GaugeLeftTitle">左侧仪表（9 点）</string>
     <string id="GaugeRightTitle">右侧仪表（3 点）</string>
     <string id="GaugeBottomTitle">下方仪表（6 点）</string>
@@ -38,7 +38,6 @@
     <string id="MetricTemperature">气温（天气）</string>
     <string id="MetricVo2Max">最大摄氧量</string>
     <string id="MetricRecovery">恢复时间</string>
-    <string id="MetricReadiness">训练准备度</string>
     <string id="MetricSolar">太阳能强度</string>
     <string id="LabelStress">压力</string>
     <string id="LabelSteps">步数</string>
@@ -48,8 +47,15 @@
     <string id="LabelActiveCalories">活动</string>
     <string id="LabelTemperature">气温</string>
     <string id="LabelRecovery">恢复</string>
-    <string id="LabelReadiness">准备</string>
     <string id="LabelSolar">太阳能</string>
+    <!-- Unit labels stay in English -->
+    <string id="LabelKm">KM</string>
+    <string id="LabelMi">MI</string>
+    <string id="LabelMeters">M</string>
+    <string id="LabelFeet">FT</string>
+    <string id="LabelHpa">HPA</string>
+    <string id="LabelInHg">INHG</string>
+    <string id="LabelVo2Max">VO2MAX</string>
     <string id="LabelCalories">KCAL</string>
     <string id="LabelPulseOx">SPO2</string>
     <string id="LabelRespiration">BRPM</string>

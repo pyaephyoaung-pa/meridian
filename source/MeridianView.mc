@@ -52,9 +52,10 @@ module Meridian {
     const M_TEMPERATURE  = 15;   // outdoor (weather), °C or °F
     const M_VO2MAX       = 16;   // running VO2 max, ml/kg/min
     const M_RECOVERY     = 17;   // recovery time, hours
-    const M_READINESS    = 18;   // training readiness, 0-100
-    const M_SOLAR        = 19;   // solar intensity, 0-100%
-    const METRIC_COUNT   = 20;
+    const M_SOLAR        = 18;   // solar intensity, 0-100%
+    const METRIC_COUNT   = 19;
+    // No training readiness: Connect IQ (SDK 9.3) has no complication or
+    // other API for it.
 
     // Garmin complication per metric: press-and-hold opens its glance, and
     // for some metrics it also pushes the live value. null: no matching glance.
@@ -79,7 +80,6 @@ module Meridian {
         Complications.COMPLICATION_TYPE_CURRENT_TEMPERATURE,
         Complications.COMPLICATION_TYPE_VO2MAX_RUN,
         Complications.COMPLICATION_TYPE_RECOVERY_TIME,
-        Complications.COMPLICATION_TYPE_TRAINING_READINESS,
         Complications.COMPLICATION_TYPE_SOLAR_INPUT
     ] as Array<Complications.Type?>;
 
@@ -189,7 +189,6 @@ class MeridianView extends WatchUi.WatchFace {
         0xF07F7F,  // temperature: coral
         0x66D9C2,  // VO2 max: mint
         0xC48FE0,  // recovery time: orchid
-        0x8FD18F,  // training readiness: green
         0xFFD24D   // solar intensity: sun yellow
     ];
 
@@ -218,7 +217,6 @@ class MeridianView extends WatchUi.WatchFace {
         0xFF5500,  // temperature: coral
         0x55FFAA,  // VO2 max: mint
         0xAA55FF,  // recovery time: orchid
-        0xAAFFAA,  // training readiness: green
         0xFFFF00   // solar intensity: sun yellow
     ];
 
@@ -282,9 +280,6 @@ class MeridianView extends WatchUi.WatchFace {
         // recovery time: hourglass
         [[0.0, 6.0, 2.5, 18.0, 2.5, 18.0, 4.5, 13.5, 12.0, 18.0, 19.5, 18.0, 21.5, 6.0, 21.5,
           6.0, 19.5, 10.5, 12.0, 6.0, 4.5]],
-        // training readiness: dial on a half arc, needle up-right
-        [[1.0, 3.0, 17.0, 3.7, 13.4, 5.6, 10.1, 8.5, 7.7, 12.0, 6.5, 15.5, 7.7, 18.4, 10.1,
-          20.3, 13.4, 21.0, 17.0], [1.0, 12.0, 17.0, 16.5, 10.5], [2.0, 12.0, 17.0, 1.5]],
         // solar intensity: sun
         [[2.0, 12.0, 12.0, 4.0], [1.0, 12.0, 2.0, 12.0, 4.5], [1.0, 12.0, 19.5, 12.0, 22.0],
          [1.0, 2.0, 12.0, 4.5, 12.0], [1.0, 19.5, 12.0, 22.0, 12.0],
@@ -464,7 +459,6 @@ class MeridianView extends WatchUi.WatchFace {
             WatchUi.loadResource(Rez.Strings.LabelTemperature) as String,
             WatchUi.loadResource(Rez.Strings.LabelVo2Max) as String,
             WatchUi.loadResource(Rez.Strings.LabelRecovery) as String,
-            WatchUi.loadResource(Rez.Strings.LabelReadiness) as String,
             WatchUi.loadResource(Rez.Strings.LabelSolar) as String
         ] as Array<String>;
         _lblLow = WatchUi.loadResource(Rez.Strings.LabelBatteryLow) as String;
@@ -1426,8 +1420,8 @@ class MeridianView extends WatchUi.WatchFace {
                 }
             }
         }
-        // Training readiness, and solar intensity on firmware without the
-        // system value: the complication only; "--" where it isn't published
+        // Solar intensity on firmware without the system value: the
+        // complication; "--" on watches without a solar lens
         var c = _live[m];
         return (c != null && c >= 0 && c <= 100) ? c : null;
     }

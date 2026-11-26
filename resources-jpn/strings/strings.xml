@@ -16,7 +16,7 @@
 
     <!-- Gauges (settings) and the new register labels; units stay in English -->
     <string id="GaugesTitle">ゲージ</string>
-    <string id="GaugesHelp">各ゲージに表示する項目を選びます。タッチスクリーン搭載のウォッチでは、ゲージを長押しすると、その項目のGarminグランスが開きます。「体力」はBody Battery（0〜100）、KCALは消費カロリー、BRPMは1分あたりの呼吸数です。「強度」は今週の運動強度の分数です。「活動」は今日の安静時の消費を超えたカロリーで、ユーザープロフィールからの推定値です。距離、高度、海面気圧、気温はウォッチの単位設定に従います（°Fのときは気圧をinHg、それ以外はhPaで表示）。「気温」はスマートフォンの天気情報による外気温です（手首のセンサーは体温の影響を受けます）。「回復」は完全に回復するまでの時間数です。VO2max、トレーニングレディネス、ソーラー強度はウォッチの計測値で、計測しないウォッチでは「--」になります。「--」はまだ測定値がないか、ウォッチがその項目に対応していないことを示します。</string>
+    <string id="GaugesHelp">各ゲージに表示する項目を選びます。タッチスクリーン搭載のウォッチでは、ゲージを長押しすると、その項目のGarminグランスが開きます。「体力」はBody Battery（0〜100）、KCALは消費カロリー、BRPMは1分あたりの呼吸数です。「強度」は今週の運動強度の分数です。「活動」は今日の安静時の消費を超えたカロリーで、ユーザープロフィールからの推定値です。距離、高度、海面気圧、気温はウォッチの単位設定に従います（°Fのときは気圧をinHg、それ以外はhPaで表示）。「気温」はスマートフォンの天気情報による外気温です（手首のセンサーは体温の影響を受けます）。「回復」は完全に回復するまでの時間数です。VO2maxとソーラー強度はウォッチの計測値で、計測しないウォッチでは「--」になります。「--」はまだ測定値がないか、ウォッチがその項目に対応していないことを示します。</string>
     <string id="GaugeLeftTitle">左ゲージ（9時）</string>
     <string id="GaugeRightTitle">右ゲージ（3時）</string>
     <string id="GaugeBottomTitle">下ゲージ（6時）</string>
@@ -38,7 +38,6 @@
     <string id="MetricTemperature">気温（天気）</string>
     <string id="MetricVo2Max">VO2max</string>
     <string id="MetricRecovery">リカバリータイム</string>
-    <string id="MetricReadiness">トレーニングレディネス</string>
     <string id="MetricSolar">ソーラー強度</string>
     <string id="LabelStress">ストレス</string>
     <string id="LabelSteps">歩数</string>
@@ -48,8 +47,15 @@
     <string id="LabelActiveCalories">活動</string>
     <string id="LabelTemperature">気温</string>
     <string id="LabelRecovery">回復</string>
-    <string id="LabelReadiness">準備</string>
     <string id="LabelSolar">ソーラー</string>
+    <!-- Unit labels stay in English -->
+    <string id="LabelKm">KM</string>
+    <string id="LabelMi">MI</string>
+    <string id="LabelMeters">M</string>
+    <string id="LabelFeet">FT</string>
+    <string id="LabelHpa">HPA</string>
+    <string id="LabelInHg">INHG</string>
+    <string id="LabelVo2Max">VO2MAX</string>
     <string id="LabelCalories">KCAL</string>
     <string id="LabelPulseOx">SPO2</string>
     <string id="LabelRespiration">BRPM</string>
